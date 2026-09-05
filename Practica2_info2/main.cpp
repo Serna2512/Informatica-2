@@ -1,45 +1,46 @@
 #include <iostream>
-
+#include "existentes.h"
 using namespace std;
-
-//EJERCICIOS PRACTICA 2
-
-//EJERCICIO 2
-
-
-void fun_c(double *a, int n, double *promedio, double *suma);
-
-double arreglo[] = {5.6,2.3,8.6,4.2,67.9,45.1};
-double *a = &arreglo[0];
-
-double prom = 0.0;
-double *Pprom = &prom;
-
-double sum = 0.0;
-double *Psum = &sum;
-
-//EJERCICIO 3
-
-unsigned short b[4][2] = {{77, 50}, {5, 2}, {28, 39}, {99, 3}};
 
 
 int main()
 {
-    /*fun_c(a, size(arreglo), Pprom, Psum); //se hacen los calculos
+    int opcion;
+    bool ban = true;
+    do{
+        cout << "------Que problema desea ver [1-8] -------"<<endl;
+        cout << "o ingrese 0 para terminar el programa: ";
+        cin >> opcion;
 
-    cout << "Suma: "<< *Psum<< endl;
-    cout << "Promedio: "<< *Pprom<< endl;
-    cout << "Cant. Elementos en arreglo: "<<size(arreglo)<<endl;
-    */
-    cout << b;
+        switch(opcion){
+        case 1:
+            //PROBLEMA 1
+            problema1();
+            break;
+
+        case 2:
+            //PROBLEMA 3
+            problema3();
+            break;
+
+        case 3:{
+            //PROBLEMA 5
+            /*
+            int digito = 2;
+            char digitoChar = digito + '0';
+            cout <<"debe salir 2: "<<digitoChar<<endl;
+            */
+            int n = 50;
+            intAcadena(n);
+            break;
+        }
+        case 0:
+            cout << "Has salido!"<<endl;
+            ban = false;
+        }
+
+    }
+    while(ban);
+
     return 0;
 }
-
-void fun_c(double *a, int n, double *promedio, double *suma){
-    int i;
-    *suma = 0.0;
-    for (i = 0; i < n; i++)
-        *suma += *(a + i);
-    *promedio = (*suma) / n;
-}
-
