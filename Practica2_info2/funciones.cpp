@@ -4,20 +4,20 @@ using namespace std;
 
 //EJERCICIOS PRACTICA 2
 
-//EJERCICIO 1
+//EJERCICIO 1 MODIFICADO
 
-void fun_a(int *px, int *py){
-    int tmp = *px;
+void fun_a(char *px, char *py){
+    char tmp = *px;
     *px = *py;
     *py = tmp;
 }
 
-void fun_b(int a[], int tam){
+void fun_b(char a[], int tam){
     int f, l;
-    int *b = a;
     for (f = 0, l = tam -1; f < l; f++, l--) {
-        fun_a(&b[f], &b[l]);
+        fun_a(&a[f], &a[l]);
     }
+
 }
 
 
@@ -105,22 +105,29 @@ void problema3(){
     compararCaracteres(Parreglo1, Parreglo2);
 }
 
-char intAcadena(int &n){ //pasar n a caracteres en ascii
-    char cadenaInt[] = {""}, digitoChar;
+
+
+void intAcadena(int &n, char a[]){ //pasar n a caracteres en ascii
+    char digitoChar;
     int var = 0;
     while(n != 0){
         int digito = (n%10); //saco el digito de la derecha del todo
         n /= 10; //quito la parte decimal y dejo la entero
         digitoChar = digito + '0'; //coge el valor entero y le suma 48 para que en ascii sea ese valor
-        cadenaInt[var] = digitoChar;
+        a[var] = digitoChar;
         var++;
     }
-     //cojo el digito de la derecha
+    a[var] = '\0';
+    fun_b(a,var);
 
-    //pasar a cadena de char con '0'
-    //agregar a un arreglo de char
-    //luego hacer un ciclo con apuntadores que cambie todos los numero de posicion
+}
 
-
+void problema5(char a[]){
+    int n;
+    cout << "Programa que ingresado un int devuelve sus caracteres pero en cadena de char"<<endl;
+    cout << "Ingrese un numero n entero positivo: ";
+    cin >> n;
+    intAcadena(n, a);
+    cout << "'"<<a<<"'"<<endl;
 }
 

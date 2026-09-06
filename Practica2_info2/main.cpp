@@ -25,13 +25,8 @@ int main()
 
         case 3:{
             //PROBLEMA 5
-            /*
-            int digito = 2;
-            char digitoChar = digito + '0';
-            cout <<"debe salir 2: "<<digitoChar<<endl;
-            */
-            int n = 50;
-            intAcadena(n);
+            char resultado[12]; //un int puede tener máximo 10 dígitos + 1 para signo +1 para \0 por eso el tamaño es 12
+            problema5(resultado);
             break;
         }
         case 0:
