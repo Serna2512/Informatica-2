@@ -7,5 +7,8 @@ char compararCaracteres(char *cadena1,char *cadena2);
 void problema3();
 void intAcadena(int &n, char resultado[]);
 void problema5(char a[]);
+void cadenaSinRepetir(char arr[]);
+void problema7(char cadena[]);
+void separarNcifras(int n,char numeros[]);
 
 #endif // EXISTENTES_H

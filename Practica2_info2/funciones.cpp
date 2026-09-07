@@ -131,3 +131,49 @@ void problema5(char a[]){
     cout << "'"<<a<<"'"<<endl;
 }
 
+void cadenaSinRepetir(char arr[]){
+
+    char copia[100];
+    char arregloFinal[100];
+    int k = 0;
+
+    //copiar el arreglo
+
+    for(int a = 0;arr[a] != '\0';a++){
+        copia[a] = arr[a];
+    }
+
+    for(int i = 0; *(arr + i) != '\0';i++){
+        bool repetido = false;
+
+        for(int j = 0;j < i;j++){
+            if(*(arr + i) == *(arr + j)){
+                repetido = true;
+                break;
+            }
+        }
+        if((!repetido)){
+            arregloFinal[k] = arr[i];
+            k++;
+        }
+    }
+    arregloFinal[k] = '\0';
+    cout << "orginal: "<< copia<<" Sin repetidos: "<< arregloFinal<<endl;
+}
+
+void problema7(char cadena[]){
+    cout << "Programa que elimina las letras repetidas de una cadena de char (limitado a 99 caracteres)"<<endl;
+    cadenaSinRepetir(cadena);
+}
+
+void separarNcifras(int n,char numeros[]){
+    int arregloEnteros[100];
+    //1). pasar los caracteres a numeros
+    cout << "Original: "<<numeros<<endl;
+
+    for(int i = 0; numeros[i] != '\0';i++){
+        arregloEnteros[i]  = numeros[i]; //necesito que numeros sean enteros
+    }
+    cout << arregloEnteros<<endl;
+}
+

@@ -29,6 +29,16 @@ int main()
             problema5(resultado);
             break;
         }
+        case 4:{
+            //PROBLEMA 7
+            char cad[] = "hola a todos mundo";
+            problema7(cad);
+            break;
+        }
+        case 5:{
+            char Charnumeros[] = "1234";
+            separarNcifras(2,Charnumeros);
+        }
         case 0:
             cout << "Has salido!"<<endl;
             ban = false;
