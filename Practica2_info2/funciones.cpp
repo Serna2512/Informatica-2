@@ -166,6 +166,7 @@ void problema7(char cadena[]){
     cadenaSinRepetir(cadena);
 }
 
+/*
 void separarNcifras(int n,char numeros[]){
     int arregloEnteros[100];
     //1). pasar los caracteres a numeros
@@ -175,5 +176,29 @@ void separarNcifras(int n,char numeros[]){
         arregloEnteros[i]  = numeros[i]; //necesito que numeros sean enteros
     }
     cout << arregloEnteros<<endl;
+}
+*/
+
+void separarPornCifras(int n, string numeros){
+    int numero = numeros.length(), suma = 0;
+    char arr[n];
+    int valor = 0;
+    char* ptr[numero];
+
+    for(int i = 0; i < numero ;i++){ //cojo de derecha a izquierda
+        ptr[i] = &numeros[i];
+        //cout << *(ptr[numero])<<endl;
+        if(i==numero){
+            for(int j = n-1;j>=0;j--){
+                arr[j] = (*(ptr[numero - j - 1]));
+                suma = arr[j] + '0';
+            }
+
+
+        }
+    }
+
+
+
 }
 

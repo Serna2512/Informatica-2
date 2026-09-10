@@ -1,6 +1,9 @@
 #include <iostream>
 #include "existentes.h"
+#include <string>
 using namespace std;
+
+string palabra = "1234";
 
 
 int main()
@@ -36,8 +39,8 @@ int main()
             break;
         }
         case 5:{
-            char Charnumeros[] = "1234";
-            separarNcifras(2,Charnumeros);
+            string palabra = "1234";
+            separarPornCifras(2,palabra);
         }
         case 0:
             cout << "Has salido!"<<endl;
