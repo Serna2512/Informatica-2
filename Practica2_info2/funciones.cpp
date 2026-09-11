@@ -179,26 +179,61 @@ void separarNcifras(int n,char numeros[]){
 }
 */
 
-void separarPornCifras(int n, string numeros){
-    int numero = numeros.length(), suma = 0;
-    char arr[n];
+char *separarPornCifras(int n, char numeros[]){
+    //1. Recorrer la cadena con un puntero
+    char *ptr =&numeros[0];
+    int countDigitos = 0, relleno = 0;
+
+    for(int i = 0;*(ptr + i) != '\0';i++){
+        countDigitos++;
+    }
+    cout << "Cantidad de digitos: "<<countDigitos<<endl;
+    relleno = (n - (countDigitos % n)) % n; //miramos cuantos ceros hay que agregar
+    int nuevoTam = countDigitos + relleno;
+    char *rellenada = new char[nuevoTam + 1];
+
+    for(int j = 0;j < relleno;j++){ //lleno el arreglo dinamico de ceros
+        rellenada[j] = '0';
+    }
+
+    for(int j = 0;j < countDigitos;j++){ //pongo los digitos desde donde se terminaron de poner los ceros
+        rellenada[relleno + j] = numeros[j];
+    }
+    rellenada[nuevoTam] = '\0'; //cerramos la cadena
+    return rellenada;
+}
+
+double sumarPorBloques(char* rellenada, int n) {
+    double suma = 0;
     int valor = 0;
-    char* ptr[numero];
+    int contador = 0;
 
-    for(int i = 0; i < numero ;i++){ //cojo de derecha a izquierda
-        ptr[i] = &numeros[i];
-        //cout << *(ptr[numero])<<endl;
-        if(i==numero){
-            for(int j = n-1;j>=0;j--){
-                arr[j] = (*(ptr[numero - j - 1]));
-                suma = arr[j] + '0';
-            }
-
-
+    for (char *p = rellenada; *p != '\0'; p++) {
+        valor = valor * 10 + (*p - '0');
+        contador++;
+        if (contador == n) {
+            suma += valor;
+            valor = 0;
+            contador = 0;
         }
     }
 
+    return suma;
+}
 
+void problema9(){
+    int n;
+    char cadena[100];
+    cout << "Programa que coge n digitos de una cadena, los separa y los va sumando"<<endl;
+    cout << "Ingrese la cantidad de cifras a coger: ";
+    cin >> n;
+    cout << "Ingrese la cadena de numeros: ";
+    cin >> cadena;
+    char *rellenada = separarPornCifras(n, cadena);
+    cout <<"original: "<<cadena<<endl;
+    double suma = sumarPorBloques(rellenada,n);
+    cout <<"suma: "<<suma<<endl;
 
+    delete[] rellenada;
 }
 

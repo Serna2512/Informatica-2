@@ -38,10 +38,10 @@ int main()
             problema7(cad);
             break;
         }
-        case 5:{
-            string palabra = "1234";
-            separarPornCifras(2,palabra);
-        }
+        case 5:
+            problema9();
+            break;
+
         case 0:
             cout << "Has salido!"<<endl;
             ban = false;
