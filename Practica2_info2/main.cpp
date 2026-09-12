@@ -11,7 +11,7 @@ int main()
     int opcion;
     bool ban = true;
     do{
-        cout << "------Que problema desea ver [1-8] -------"<<endl;
+        cout << "------Que problema desea ver [1-6] -------"<<endl;
         cout << "o ingrese 0 para terminar el programa: ";
         cin >> opcion;
 
@@ -34,13 +34,27 @@ int main()
         }
         case 4:{
             //PROBLEMA 7
-            char cad[] = "hola a todos mundo";
+            char cad[] = "bananas";
             problema7(cad);
             break;
         }
         case 5:
             problema9();
             break;
+        case 6:{
+
+            char matriz[15][20];
+            char (*Ptrmatriz)[20] = matriz;
+
+            for(int i = 0;i<15;i++){ //pasar por cada fila
+                for(int j = 0;j<20;j++){ //pasar por cada columna
+                    Ptrmatriz[i][j] = '-';
+                }
+            }
+
+            problema11(Ptrmatriz);
+            break;
+        }
 
         case 0:
             cout << "Has salido!"<<endl;

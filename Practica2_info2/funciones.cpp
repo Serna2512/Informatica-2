@@ -78,7 +78,7 @@ void problema1(){ //funcion auxiliar para llamar al problema
     minima_comb(cantidad);
 }
 
-bool compararCaracteres(char *cadena1, char*cadena2){
+bool compararCaracteres(char *cadena1, char *cadena2){
     int i = 0;
     while(*(cadena1 + i) == *(cadena2 + i) && *(cadena1 + i) != '\0'){ //en las cadenas char se termina de imrpimir cuando se identifica el caracter '\0'
         i++;
@@ -99,8 +99,9 @@ bool compararCaracteres(char *cadena1, char*cadena2){
 
 void problema3(){
     cout << "Programa que analiza dos cadenas de caracteres y verifica si son iguales, retorna true si si y false si no"<<endl;
-    char arreglo1[] = "Hola MUNDO", arreglo2[] = "Hola a todos";
+    char arreglo1[] = "Hola MUNDO", arreglo2[] = "Hola mundo";
     char *Parreglo1 = arreglo1, *Parreglo2 = arreglo2;
+    cout <<"D.M1: "<<&Parreglo1<<endl<<"D.M2:"<< &Parreglo2<<endl;
 
     compararCaracteres(Parreglo1, Parreglo2);
 }
@@ -166,25 +167,13 @@ void problema7(char cadena[]){
     cadenaSinRepetir(cadena);
 }
 
-/*
-void separarNcifras(int n,char numeros[]){
-    int arregloEnteros[100];
-    //1). pasar los caracteres a numeros
-    cout << "Original: "<<numeros<<endl;
-
-    for(int i = 0; numeros[i] != '\0';i++){
-        arregloEnteros[i]  = numeros[i]; //necesito que numeros sean enteros
-    }
-    cout << arregloEnteros<<endl;
-}
-*/
 
 char *separarPornCifras(int n, char numeros[]){
-    //1. Recorrer la cadena con un puntero
+
     char *ptr =&numeros[0];
     int countDigitos = 0, relleno = 0;
 
-    for(int i = 0;*(ptr + i) != '\0';i++){
+    for(int i = 0;*(ptr + i) != '\0';i++){ //cuento los elementos de la cadena
         countDigitos++;
     }
     cout << "Cantidad de digitos: "<<countDigitos<<endl;
@@ -200,6 +189,7 @@ char *separarPornCifras(int n, char numeros[]){
         rellenada[relleno + j] = numeros[j];
     }
     rellenada[nuevoTam] = '\0'; //cerramos la cadena
+
     return rellenada;
 }
 
@@ -235,5 +225,80 @@ void problema9(){
     cout <<"suma: "<<suma<<endl;
 
     delete[] rellenada;
+}
+
+void manipularSala(char (*Ptrmatriz)[20],char fila, unsigned int columna, char opcion){
+    //la funcion permite cambiar el valor de una posicion de la sala
+    //*Ptrmatriz apunta a la direccion de memoria del primer elemento de la matriz
+
+    int IntLetra = fila  - 'A'; //pasar de letras mayusculas a char
+
+    if(opcion == '+' && Ptrmatriz[IntLetra][columna - 1] == '+'){
+        cout << "El asiento: "<<fila<<columna<<" ya está reservado!"<<endl;
+    }
+    else if(opcion == '+' && Ptrmatriz[IntLetra][columna - 1] == '-'){
+        Ptrmatriz[IntLetra][columna - 1] = '+';
+        cout <<"Se ha reservado el asiento: "<<fila<<columna<<endl;
+
+    }
+    else if(opcion == '-' && Ptrmatriz[IntLetra][columna - 1] == '+'){
+        Ptrmatriz[IntLetra][columna - 1] = '-';
+        cout <<"Se ha cancelado la reserva del asiento: "<<fila<<columna<<endl;
+    }
+    else if(opcion == '-' && Ptrmatriz[IntLetra][columna - 1] == '-'){
+        cout <<"No se puede cancelar el asiento: "<<fila<<columna<<" porque no esta reservado!"<<endl;
+    }
+
+    //return &Ptrmatriz[0][0]; //por si necesito retornar la matriz
+
+}
+
+void mostrarSala(char (*Ptrmatriz)[20]){
+
+    cout << "           TEATRO PABLO TOBON URIBE"<<endl<<"                PLATEA CENTRAL"<<endl;
+    cout << "   1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20"<<endl;
+    for(int i = 0;i<15;i++){ //pasar por cada fila
+        char letraFila = i + 'A';
+        cout << letraFila<< "| ";
+        for(int j = 0;j<20;j++){ //pasar por cada columna
+            cout << Ptrmatriz[i][j]<<" ";
+
+        }
+        cout << " |";
+        cout <<endl;
+    }
+    cout <<endl;
+
+}
+
+
+void problema11(char (*Ptrmatriz)[20]){
+    char opcion = '1';
+    char fila;
+    int columna;
+
+    bool reservas = true;
+
+    while(reservas){
+        mostrarSala(Ptrmatriz);
+        cout << "1). Digite '+' para reservar un asiento"<<endl<<"2). Digite '-' para cancelar la reserva de un asiento: "<<endl;
+        cout << "3). DIGITE '0' PARA SALIR: ";
+        cin >> opcion;
+        if(opcion == '0'){
+            reservas = false;
+            break;
+        }
+
+        cout << "Ingrese la letra de la silla en mayuscula [A-O]: ";
+        cin >> fila;
+
+        cout << "Ingrese el numero de la silla: ";
+        cin >> columna;
+        cout <<endl;
+
+        manipularSala(Ptrmatriz, fila, columna, opcion);
+
+    }
+
 }
 

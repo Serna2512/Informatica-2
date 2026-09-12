@@ -11,5 +11,8 @@ void cadenaSinRepetir(char arr[]);
 void problema7(char cadena[]);
 char *separarPornCifras(int n, char numeros[]);
 void problema9();
+void manipularSala(char (*Ptrmatriz)[20],char fila, unsigned int columna, char opcion);
+void problema11(char (*Ptrmatriz)[20]);
+void mostrarSala(char (*Ptrmatriz)[20]);
 
 #endif // EXISTENTES_H
