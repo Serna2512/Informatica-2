@@ -11,7 +11,7 @@ int main()
     int opcion;
     bool ban = true;
     do{
-        cout << "------Que problema desea ver [1-6] -------"<<endl;
+        cout << "------Que problema desea ver [1-7] -------"<<endl;
         cout << "o ingrese 0 para terminar el programa: ";
         cin >> opcion;
 
@@ -51,10 +51,12 @@ int main()
                     Ptrmatriz[i][j] = '-';
                 }
             }
-
             problema11(Ptrmatriz);
             break;
         }
+        case 7:
+             problema13();
+            break;
 
         case 0:
             cout << "Has salido!"<<endl;

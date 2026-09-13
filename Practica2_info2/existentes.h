@@ -14,5 +14,6 @@ void problema9();
 void manipularSala(char (*Ptrmatriz)[20],char fila, unsigned int columna, char opcion);
 void problema11(char (*Ptrmatriz)[20]);
 void mostrarSala(char (*Ptrmatriz)[20]);
+void problema13();
 
 #endif // EXISTENTES_H

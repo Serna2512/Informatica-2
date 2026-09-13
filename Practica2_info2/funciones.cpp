@@ -1,4 +1,5 @@
 #include <iostream>
+#include <random>
 
 using namespace std;
 
@@ -302,3 +303,38 @@ void problema11(char (*Ptrmatriz)[20]){
 
 }
 
+int cantStars(int (*Ptrmatriz)[8]){ //puntero a la matriz estática de 8 columnas
+    int countStars = 0;
+
+    //itero en toda la matriz ignorando bordes
+
+    for(int i = 1;i < 5;i++){
+        for(int j = 1;j < 7;j++){
+            if(((Ptrmatriz[i][j] + Ptrmatriz[i][j-1] + Ptrmatriz[i][j+1] + Ptrmatriz[i-1][j] + Ptrmatriz[i+1][j]) / 5) > 6){
+                countStars++;
+            }
+        }
+    }
+    return countStars;
+}
+
+void problema13(){
+    int matrizGalaxia[6][8];
+    int (*Ptrmatriz)[8] = matrizGalaxia;
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<> distrib(0, 15);
+
+
+    for(int i = 0;i<6;i++){
+        for(int j = 0;j<8;j++){
+            int numero = distrib(gen);
+            matrizGalaxia[i][j] = numero;
+            cout << matrizGalaxia[i][j] << "  ";
+        }
+        cout << endl;
+    }
+
+    int cant_estrellas = cantStars(Ptrmatriz);
+    cout << "Numero de estrellas encontrdas ignorando los bordes: " <<cant_estrellas<<endl;
+}
