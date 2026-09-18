@@ -15,5 +15,8 @@ void manipularSala(char (*Ptrmatriz)[20],char fila, unsigned int columna, char o
 void problema11(char (*Ptrmatriz)[20]);
 void mostrarSala(char (*Ptrmatriz)[20]);
 void problema13();
+void interseccion(int A[4], int B[4], int C[4]);
+void problema15();
+void problema17();
 
 #endif // EXISTENTES_H

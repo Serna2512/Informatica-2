@@ -1,9 +1,9 @@
 #include <iostream>
 #include "existentes.h"
-#include <string>
+
+
 using namespace std;
 
-string palabra = "1234";
 
 
 int main()
@@ -11,7 +11,7 @@ int main()
     int opcion;
     bool ban = true;
     do{
-        cout << "------Que problema desea ver [1-7] -------"<<endl;
+        cout << "------Que problema desea ver [1-9] -------"<<endl;
         cout << "o ingrese 0 para terminar el programa: ";
         cin >> opcion;
 
@@ -57,6 +57,12 @@ int main()
         case 7:
              problema13();
             break;
+        case 8:
+            problema15();
+            break;
+        case 9:
+            problema17();
+            break;
 
         case 0:
             cout << "Has salido!"<<endl;
@@ -68,3 +74,4 @@ int main()
 
     return 0;
 }
+

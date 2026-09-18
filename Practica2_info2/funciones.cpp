@@ -338,3 +338,93 @@ void problema13(){
     int cant_estrellas = cantStars(Ptrmatriz);
     cout << "Numero de estrellas encontrdas ignorando los bordes: " <<cant_estrellas<<endl;
 }
+
+void interseccion(int A[4], int B[4], int C[4]){ //entrada de los 3 erctangulos
+    int x_c;
+    if(A[0] > B[0]){
+        x_c = A[0];
+    }
+    else{
+        x_c = B[0];
+    }
+
+    int y_c;
+    if(A[1] > B[1]){
+        y_c = A[1];
+    }
+    else{
+        y_c = B[1];
+    }
+
+    int borde_A_der = A[0] + A[2];
+    int borde_B_der = B[0] + B[2];
+    int derecha_c;
+    if (borde_A_der < borde_B_der) {
+        derecha_c = borde_A_der;
+    } else {
+        derecha_c = borde_B_der;
+    }
+
+    // abajo_c = min(A[1]+A[3], B[1]+B[3])
+    int borde_A_abajo = A[1] + A[3];
+    int borde_B_abajo = B[1] + B[3];
+    int abajo_c;
+    if (borde_A_abajo < borde_B_abajo) {
+        abajo_c = borde_A_abajo;
+    } else {
+        abajo_c = borde_B_abajo;
+    }
+
+    int ancho_c = derecha_c - x_c;
+    int alto_c  = abajo_c - y_c;
+
+    if (ancho_c <= 0 || alto_c <= 0) {
+        C[0] = 0; C[1] = 0; C[2] = 0; C[3] = 0;
+    } else {
+        C[0] = x_c;
+        C[1] = y_c;
+        C[2] = ancho_c;
+        C[3] = alto_c;
+    }
+    cout << "X_c: "<< x_c << " y_c: "<< y_c<< "ancho de c: "<< ancho_c << " alto de c: " <<alto_c<<endl;
+}
+
+void problema15(){
+    cout << "Programa que dado dos rectangulos calcula el rectando intersectado entre ellos"<<endl;
+    int A[4] = {0,0,8,4};
+    int B[4] = {5,2,6,7};
+    int C[4];
+    int *ptrA = &A[0];
+    int *ptrB = &B[0];
+    int *ptrC = &C[0];
+    interseccion(ptrA,ptrB,ptrC);
+
+}
+
+int divisores_n(int &n){ //recibimos ese número por referencia
+    //hallar los divisores
+    int suma_div = 0;
+    for(unsigned int i = 1;i <= (n/2);i++){
+        if(n%i == 0){
+            suma_div+= i; //sumo ese divisor
+        }
+    }
+    return suma_div;
+}
+
+void problema17(){
+    int n, suma_total = 0;
+    cout << "Programa que da la suma de los numeros amigables menores a n"<<endl;
+    cout << "Ingrese un numero positivo entero: ";
+    cin >> n;
+    for(int numero = 1;numero < n;numero++){
+       int suma_n = divisores_n(numero);
+        int suma_res = divisores_n(suma_n);
+       if(suma_res == numero && numero != suma_n){
+            suma_total += numero;
+
+       }
+    }
+    cout << "El resultado de la suma es: " << suma_total << endl;
+
+}
