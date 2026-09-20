@@ -1,1 +1,0 @@
-README acerca del desafio 1
