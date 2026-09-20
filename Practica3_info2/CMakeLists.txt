@@ -5,7 +5,10 @@ project(Practica3_info2 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(Practica3_info2 main.cpp)
+add_executable(Practica3_info2 main.cpp
+    RLE.cpp
+    existentes1.h
+    LZ78.cpp)
 
 include(GNUInstallDirs)
 install(TARGETS Practica3_info2

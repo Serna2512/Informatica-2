@@ -340,12 +340,13 @@ void problema13(){
 }
 
 void interseccion(int A[4], int B[4], int C[4]){ //entrada de los 3 erctangulos
-    int x_c;
+    int x_c;    //para el inicio de la intersección me quedo con el valor mayor de las x de los rectángulos
+
     if(A[0] > B[0]){
-        x_c = A[0];
+        x_c = A[0]; // el borde izquierdo de A está más a la derecha, así que la intersección empieza ahí
     }
     else{
-        x_c = B[0];
+        x_c = B[0]; // si no, es el de B (o son iguales, y da lo mismo cuál tomes)
     }
 
     int y_c;
@@ -356,11 +357,11 @@ void interseccion(int A[4], int B[4], int C[4]){ //entrada de los 3 erctangulos
         y_c = B[1];
     }
 
-    int borde_A_der = A[0] + A[2];
+    int borde_A_der = A[0] + A[2]; //para el final de la intersección verifico con < porque me quedo con el valor menor entre esos dos rectangulos
     int borde_B_der = B[0] + B[2];
     int derecha_c;
     if (borde_A_der < borde_B_der) {
-        derecha_c = borde_A_der;
+        derecha_c = borde_A_der; // A termina antes, así que ahí se corta la intersección
     } else {
         derecha_c = borde_B_der;
     }
