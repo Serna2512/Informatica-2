@@ -2,6 +2,7 @@
 #include <fstream>
 #include <cstring>
 #include "existentes1.h"
+#include "LZ78.h"
 #include <string>
 
 using namespace std;
@@ -22,10 +23,19 @@ clave y posteriormente invertir la rotacion realizada.
 int main()
 {
 
+    //RLE
+
     string resul = iniciarRLE();
     cout << "Comrpimido: "<<resul<<endl;
     string original = recuperarInicial(resul);
     cout << "Original: "<<original<<endl;
+
+    //LZ78
+
+    const char entrada[] = "ABAABABA";
+    const char* ptr = entrada;
+    compressLZ78(ptr);
+
 
 
     return 0;

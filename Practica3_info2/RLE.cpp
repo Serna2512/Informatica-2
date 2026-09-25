@@ -24,7 +24,7 @@ string RLEptr(const char* cadena){
 
 
 string iniciarRLE(){ //funcion que invoca algoritmo RLE e imprime la compresion
-    char inicial[] = "AAASSSTTTYYQQDJHJJJSDSSKKK";
+    char inicial[] = "8888888888";
     const char* cadena = inicial;
 
     return RLEptr(cadena);
@@ -34,7 +34,7 @@ string recuperarInicial(string resul){
     string original = "";
     int n = 0;
 
-    for(int i = 0;i < resul.length();i+=2){   //recorrer la compresión de derecha a izuierda
+    for(int i = 0;i < resul.length();i+=2){   //recorrer la compresión de derecha a izquierda
         //char caracter_actual = resul[i];
             int num_rep = resul[i] - '0'; //convertimos a int para iterar
 
@@ -45,7 +45,7 @@ string recuperarInicial(string resul){
 
                 original += letra;
             }
-
+//fucnion de verificacion y verificar cuando la entrada es mayor a 9 dígitos
 }
     return original;
 }
