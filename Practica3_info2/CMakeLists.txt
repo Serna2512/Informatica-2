@@ -9,7 +9,9 @@ add_executable(Practica3_info2 main.cpp
     RLE.cpp
     existentes1.h
     LZ78.cpp
-    LZ78.h)
+    LZ78.h
+    encriptacion_desencriptacion.cpp
+    encrip_desencrip.h)
 
 include(GNUInstallDirs)
 install(TARGETS Practica3_info2

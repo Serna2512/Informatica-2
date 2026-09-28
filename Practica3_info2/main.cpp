@@ -1,9 +1,10 @@
 #include <iostream>
 #include <fstream>
-#include <cstring>
 #include "existentes1.h"
 #include "LZ78.h"
+#include "encrip_desencrip.h"
 #include <string>
+#include <bitset>
 
 using namespace std;
 
@@ -22,7 +23,7 @@ clave y posteriormente invertir la rotacion realizada.
 
 int main()
 {
-
+    /*
     //RLE
 
     string resul = iniciarRLE();
@@ -36,7 +37,18 @@ int main()
     const char* ptr = entrada;
     compressLZ78(ptr);
 
+    char resultado_xor = XOR(5, 7); //5: 00000101 y 7: 00000111
+    cout << bitset<8>(5)<<endl;
+    cout << bitset<8>(7)<<endl;
 
+    cout << bitset<8>(resultado_xor);
+    */
+
+    unsigned char input = 80;
+
+    unsigned char rotate = rotacion_izquierda(input,2);
+    cout << bitset<8>(input)<<endl;
+    cout << bitset<8>(rotate)<<endl;
 
     return 0;
 }

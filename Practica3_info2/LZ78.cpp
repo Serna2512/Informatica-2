@@ -31,7 +31,6 @@ void decompressLZ78(Entry* dict, int dictSize) {
         cout << resultado;
     }
 
-    cout << endl;
 }
 
 
@@ -64,8 +63,19 @@ Entry* compressLZ78(const char* input) {
             currentPrefix = 0;	//se reinicia a 0 para verificar si las tuplas siguientes ya están o no en el diccionario
         }
     }
+
     //INVOCACION PARA DESENCRPITAR
-    decompressLZ78(dict, count_tuplas);
+    decompressLZ78(dict, dictSize);
+
+    if (currentPrefix != 0) {
+
+        string resultado_final = "";
+        reconstruirEntrada(dict, currentPrefix, resultado_final);
+        cout << resultado_final<<endl;
+        cout << "Parte especial del caso especial: ";
+        cout << "(" << currentPrefix << ", " << "-" << ")\n"<<endl;
+    }
+
     //cout << "Hay:" <<count_tuplas <<" tuplas"<<endl;
     return dict;     //retorno el puntero al diccionario (encriptacion)
     //liberamos el diccionario luego de usarlo
