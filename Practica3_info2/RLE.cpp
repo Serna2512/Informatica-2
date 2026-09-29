@@ -24,7 +24,7 @@ string RLEptr(const char* cadena){
 
 
 string iniciarRLE(){ //funcion que invoca algoritmo RLE e imprime la compresion
-    char inicial[] = "AAAAAAAAAAB";
+    char inicial[] = "AAAAAAAAAABBBRREE";
     const char* cadena = inicial;
 
     return RLEptr(cadena);
@@ -58,9 +58,6 @@ string recuperarInicial(string resul){
                 }
                 n+=2;
             }
-
-
-//fucnion de verificacion y verificar cuando la entrada es mayor a 9 dígitos
 }
     return original;
 }
