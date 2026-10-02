@@ -8,7 +8,7 @@ string leer_archivo(const string& rutaArchivo){
     ifstream archivo(rutaArchivo);
 
     if(!archivo.is_open()){
-        cout << "Error: no se pudo abrir el archivo." << endl;
+        cout << "Error: no se pudo abrir el archivo" << endl;
         return "";
     }
 
@@ -19,5 +19,6 @@ string leer_archivo(const string& rutaArchivo){
         contenido += caracter;
     }
     archivo.close();
+    cout << "Archivo leido"<<endl;
     return contenido;
 }

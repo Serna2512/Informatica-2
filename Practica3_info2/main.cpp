@@ -44,27 +44,45 @@ int main()
     case 1:{
         //RLE
         //cambiar dentro del RLE para hacerlo con el texto leido desde el archivo
-        string resul = iniciarRLE();
-        cout << "Comrpimido: "<<resul<<endl;
+        //cadena_archivo.c_str(); //convertimos el string a const char* para pasarselo al RLE
+        //string cadena = iniciarRLE();
+        string resul = RLEptr((cadena_archivo.c_str()));
+        cout << "Comprimido: "<<resul<<endl;
+        //cout << "Comrpimido: "<<resul<<endl;
         string original = recuperarInicial(resul);
         cout << "Original: "<<original<<endl;
+
+        //Encriptamos
+        const char* ptr = resul.c_str(); //convertimos el string a cadena de char
+        cout << "Ingrese un valor entero entre 0 y 8 para rotar los bits hacia la izquierda: ";
+        unsigned short int nRota;
+        try{
+            cin >> nRota;
+            if(nRota == 0 || nRota >= 8){
+                cout << "Numero de rotaciones invalido!"<<endl;
+                throw nRota;
+            }
+        } catch(unsigned int valor_invalido){
+            cout << "Error en la opcion "<<valor_invalido<<endl;
+        }
+        unsigned char* prtResultado_encriptado = encript(ptr, nRota); //rotamos cada char comprimido hacia la izquierda
+        //cout << prtResultado_encriptado;
+        delete[] prtResultado_encriptado;
         break;
     }
 
     case 2:
         //LZ78
-
-        const char entrada[] = "ABAABABA";
-        const char* ptr = entrada;
-        compressLZ78(ptr);
+        compressLZ78((cadena_archivo.c_str()));
+        break;
 
     }
     }while(opc != 0);
 
 
     char resultado_xor = XOR(5, 7); //5: 00000101 y 7: 00000111
-    cout << bitset<8>(5)<<endl;
-    cout << bitset<8>(7)<<endl;
+    cout <<"Valor binario original: "<< bitset<8>(5)<<endl;
+    cout <<"Clave K: "<< bitset<8>(7)<<endl;
 
     cout << "Resultado con XOR: "<<bitset<8>(resultado_xor)<<endl;
     cout << "Devolver al dato original: "<<bitset<8>(resultado_xor^7)<<endl;
@@ -73,8 +91,11 @@ int main()
     unsigned char input = 80;
 
     unsigned char rotate = rotacion_izquierda(input,2);
-    cout << bitset<8>(input)<<endl;
-    cout << bitset<8>(rotate)<<endl;
+    cout << "Entrada: "<<bitset<8>(input)<<endl;
+    cout << "Salida rotada: "<<bitset<8>(rotate)<<endl;
+
+    cout << "Salida original: "<<bitset<8>(rotacion_derecha(rotate, 2))<<endl;
+
 
     return 0;
 }

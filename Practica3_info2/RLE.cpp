@@ -22,14 +22,6 @@ string RLEptr(const char* cadena){
     return resultado;
 }
 
-
-string iniciarRLE(){ //funcion que invoca algoritmo RLE e imprime la compresion
-    char inicial[] = "AAAAAAAAAABBBRREE";
-    const char* cadena = inicial;
-
-    return RLEptr(cadena);
-}
-
 string recuperarInicial(string resul){
     string original = "";
     int n = 0;

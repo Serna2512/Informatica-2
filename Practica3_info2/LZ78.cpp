@@ -31,6 +31,7 @@ void decompressLZ78(Entry* dict, int dictSize) {
         cout << resultado;
     }
     delete[] dict;
+    cout << endl;
 }
 
 
@@ -76,7 +77,7 @@ Entry* compressLZ78(const char* input) {
         cout << "(" << currentPrefix << ", " << "-" << ")\n"<<endl;
     }
 
-    //cout << "Hay:" <<count_tuplas <<" tuplas"<<endl;
+
     return dict;     //retorno el puntero al diccionario (encriptacion)
     //liberamos el diccionario luego de usarlo en descompress
 
