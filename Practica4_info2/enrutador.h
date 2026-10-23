@@ -3,6 +3,7 @@
 
 #include <string>
 #include <map>
+using namespace std;
 
 //uso map porque esta STL permite buscar por nombre (string), las otras por indices, lo que sería menos eficiente
 //tambien porque se ordena por clave, ejemplo con A,B,C
@@ -13,30 +14,30 @@ public:
     static constexpr int INFINITO = 1000000000;
 
 private:
-    std::string nombre;                       // identificador del enrutador
-    std::map<std::string, int> vecinos;       // vecino -> costo del enlace directo
-    std::map<std::string, int> tablaCostos;   // destino -> mejor costo conocido
+    string nombre;                       // identificador del enrutador
+    map<string, int> vecinos;       // vecino -> costo del enlace directo
+    map<string, int> tablaCostos;   // destino -> mejor costo conocido
 
 public:
 
     Enrutador();
-    explicit Enrutador(const std::string& nombre);
+    explicit Enrutador(const string& nombre);
 
     // Identificador
-    const std::string& getNombre() const;
+    const string& getNombre() const;
 
     // Vecinos directamente conectados
-    bool agregarVecino(const std::string& vecino, int costo);   // agrega o actualiza el costo
-    bool eliminarVecino(const std::string& vecino);
-    bool esVecino(const std::string& vecino) const;
-    int getCostoEnlace(const std::string& vecino) const;        // INFINITO si no es vecino
-    const std::map<std::string, int>& getVecinos() const;
+    bool agregarVecino(const string& vecino, int costo);   // agrega o actualiza el costo
+    bool eliminarVecino(const string& vecino);
+    bool esVecino(const string& vecino) const;
+    int getCostoEnlace(const string& vecino) const;        // INFINITO si no es vecino
+    const map<string, int>& getVecinos() const;
 
     // Tabla de costos
     void reiniciarTabla();                                      // estado inicial: yo = 0 y mis vecinos directos
-    void actualizarCosto(const std::string& destino, int costo);  // la Red entrega el resultado calculado
-    int getCosto(const std::string& destino) const;             // INFINITO si no hay ruta
-    const std::map<std::string, int>& getTablaCostos() const;
+    void actualizarCosto(const string& destino, int costo);  // la Red entrega el resultado calculado
+    int getCosto(const string& destino) const;             // INFINITO si no hay ruta
+    const map<string, int>& getTablaCostos() const;
 
     // Presentacion
     void mostrarVecinos() const;
