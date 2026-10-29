@@ -1,7 +1,9 @@
 #include <iostream>
 #include <string>
 #include <limits>
+//#include <cctype>
 #include "Red.h"
+#include "camino.h"
 
 using namespace std;
 
@@ -41,7 +43,9 @@ void mostrarMenu() {
     cout << "0. Salir" << endl;
 }
 
+
 int main() {
+
     Red red;
     int opcion;
 
@@ -52,6 +56,9 @@ int main() {
         switch (opcion) {
         case 1: {
             string nombre = leerTexto("Nombre del nuevo enrutador: ");
+            if (nombre.length() == 1 && islower(nombre[0])) {
+                nombre[0] = toupper(nombre[0]); //Convierte el carácter a mayúscula
+            }
             if (red.agregarEnrutador(nombre)) {
                 cout << "Enrutador " << nombre << " agregado." << endl;
             } else {

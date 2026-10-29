@@ -35,7 +35,7 @@ void Red::dijkstra(const string& origen, map<string, int>& dist) const {
             continue;
         }
 
-        map<string, Enrutador>::const_iterator it = enrutadores.find(nombreActual);
+        map<string, Enrutador>::const_iterator it = enrutadores.find(nombreActual); //iterador solo para lectura
         if (it == enrutadores.end()) {
             continue;
         }
@@ -46,7 +46,7 @@ void Red::dijkstra(const string& origen, map<string, int>& dist) const {
             map<string, int>::iterator d = dist.find(v->first);
             if (d == dist.end() || nuevoCosto < d->second) {
                 dist[v->first] = nuevoCosto;
-                cola.push(Par(nuevoCosto, v->first));
+                cola.push(Par(nuevoCosto, v->first)); //el push reorganiza automaticamente la cola para mantener el orden de prioridad
             }
         }
     }
@@ -71,8 +71,7 @@ bool Red::eliminarEnrutador(const string& nombre) {
 
     // Los vecinos dejan de tener enlace con el enrutador que se elimina
     const map<string, int>& vecinos = it->second.getVecinos();
-    for (map<string, int>::const_iterator v = vecinos.begin();
-         v != vecinos.end(); ++v) {
+    for (map<string, int>::const_iterator v = vecinos.begin(); v != vecinos.end(); ++v) {
         map<string, Enrutador>::iterator otro = enrutadores.find(v->first);
         if (otro != enrutadores.end()) {
             otro->second.eliminarVecino(nombre);
@@ -89,7 +88,7 @@ bool Red::agregarEnlace(const string& a, const string& b, int costo) {
     if (a == b || costo <= 0) {
         return false;
     }
-    map<string, Enrutador>::iterator ia = enrutadores.find(a);
+    map<string, Enrutador>::iterator ia = enrutadores.find(a); //.find() devuelve un iterador (D.M a ese valor)
     map<string, Enrutador>::iterator ib = enrutadores.find(b);
     if (ia == enrutadores.end() || ib == enrutadores.end()) {
         return false;

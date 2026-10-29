@@ -9,7 +9,9 @@ add_executable(Practica4_info2 main.cpp
     enrutador.h
     enrutador.cpp
     red.h
-    red.cpp)
+    red.cpp
+    camino.cpp
+    camino.h)
 
 include(GNUInstallDirs)
 install(TARGETS Practica4_info2

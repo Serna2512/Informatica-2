@@ -7,8 +7,7 @@ using namespace std;
 Enrutador::Enrutador() {
 }
 
-Enrutador::Enrutador(const
-                     string& nombre) : nombre(nombre) {
+Enrutador::Enrutador(const string& nombre) : nombre(nombre) {
     // Al encenderse, la tabla solo conoce al propio enrutador
     reiniciarTabla();
 }
