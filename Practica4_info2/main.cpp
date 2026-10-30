@@ -26,6 +26,9 @@ string leerTexto(const string& mensaje) {
     string texto;
     cout << mensaje;
     cin >> texto;
+    if(texto.length() == 1 && islower(texto[0])){
+        texto[0] = toupper(texto[0]);
+    }
     return texto;
 }
 
@@ -70,9 +73,6 @@ int main() {
         switch (opcion) {
         case 1: {
             string nombre = leerTexto("Nombre del nuevo enrutador: ");
-            if (nombre.length() == 1 && islower(nombre[0])) {
-                nombre[0] = toupper(nombre[0]); //Convierte el carácter a mayúscula
-            }
             if (red.agregarEnrutador(nombre)) {
                 cout << "Enrutador " << nombre << " agregado." << endl;
                 guardarRed(red);
@@ -83,9 +83,6 @@ int main() {
         }
         case 2: {
             string nombre = leerTexto("Enrutador a eliminar: ");
-            if (nombre.length() == 1 && islower(nombre[0])) {
-                nombre[0] = toupper(nombre[0]); //Convierte el carácter a mayúscula
-            }
             if (red.eliminarEnrutador(nombre)) {
                 cout << "Enrutador " << nombre << " eliminado. Tablas actualizadas." << endl;
                 guardarRed(red);
@@ -96,13 +93,9 @@ int main() {
         }
         case 3: {
             string a = leerTexto("Primer enrutador: ");
-            if (a.length() == 1 && islower(a[0])) {
-                a[0] = toupper(a[0]); //Convierte el carácter a mayúscula
-            }
+
             string b = leerTexto("Segundo enrutador: ");
-            if (b.length() == 1 && islower(b[0])) {
-                b[0] = toupper(b[0]); //Convierte el carácter a mayúscula
-            }
+
             int costo = leerEntero("Costo del enlace: ");
             if (red.agregarEnlace(a, b, costo)) {
                 cout << "Enlace " << a << " <-> " << b << " (costo " << costo << ") registrado. Tablas actualizadas." << endl;
@@ -115,12 +108,9 @@ int main() {
         }
         case 4: {
             string a = leerTexto("Primer enrutador: ");
-            if (a.length() == 1 && islower(a[0])) {
-                a[0] = toupper(a[0]);
+
             string b = leerTexto("Segundo enrutador: ");
-            if (b.length() == 1 && islower(b[0])) {
-                b[0] = toupper(b[0]); //Convierte el carácter a mayúscula
-            }
+
             if (red.eliminarEnlace(a, b)) {
                 cout << "Enlace eliminado. Tablas actualizadas." << endl;
                 guardarRed(red);
@@ -129,12 +119,10 @@ int main() {
             }
             break;
         }
-        }
+
         case 5: {
             string nombre = leerTexto("Enrutador: ");
-            if (nombre.length() == 1 && islower(nombre[0])) {
-                nombre[0] = toupper(nombre[0]); //Convierte el carácter a mayúscula
-            }
+
             const Enrutador* e = red.getEnrutador(nombre);
             if (e == nullptr) {
                 cout << "El enrutador no existe." << endl;
@@ -145,9 +133,7 @@ int main() {
         }
         case 6: {
             string nombre = leerTexto("Enrutador: ");
-            if (nombre.length() == 1 && islower(nombre[0])) {
-                nombre[0] = toupper(nombre[0]); //Convierte el carácter a mayúscula
-            }
+
             const Enrutador* e = red.getEnrutador(nombre);
             if (e == nullptr) {
                 cout << "El enrutador no existe." << endl;

@@ -46,10 +46,9 @@ void Red::dijkstra(const string& origen, map<string, int>& dist) const {
         const map<string, int>& vecinos = it->second.getVecinos();
         for (map<string, int>::const_iterator v = vecinos.begin(); v != vecinos.end(); ++v) {
 
-            if (costoActual > numeric_limits<int>::max() - v->second) { //proteccion contra desbordamiento de enteros
+            if (costoActual > numeric_limits<int>::max() - v->second) {
                 continue;
             }
-
             int nuevoCosto = costoActual + v->second;   //si nuevo costo es menor que el guardado actualizamos dist
             map<string, int>::iterator d = dist.find(v->first);
             if (d == dist.end() || nuevoCosto < d->second) {
@@ -83,19 +82,19 @@ Camino Red::obtenerCamino(const string& origen, const string& destino){
     }
 
     //Estructuras auxiliares para reconstruir la ruta
-    map<string, string> previo;
-    map<string, bool> visitados;
-    queue<string> cola;
+    map<string, string> previo; //guarda cual fue el enrutador anterior para reconstruir la ruta
+    map<string, bool> visitados; //evita recorrer varias veces el mismo enrutador
+    queue<string> cola; //almacena los enrutadores pendientes por explorar
 
-    cola.push(origen);
-    visitados[origen] = true;
+    cola.push(origen); //agregar al final el enrutador de origen
+    visitados[origen] = true; //ese enrutador ya lo visitamos
 
     //Recorrer únicamente conexiones que pertenecen
     //a alguna ruta de costo mínimo
     while (!cola.empty()) {
 
-        string actual = cola.front();
-        cola.pop(); //elimino el elemento que está al principio
+        string actual = cola.front(); //obtener el primero de la cola
+        cola.pop(); //elimino el elemento porque lo vamos a procesar
 
         if (actual == destino) {
             break;
@@ -107,7 +106,7 @@ Camino Red::obtenerCamino(const string& origen, const string& destino){
             continue;
         }
 
-        const map<string, int>& vecinos = it->second.getVecinos();
+        const map<string, int>& vecinos = it->second.getVecinos(); //obtener vecinos directos del enrutador actual para ver sus conexiones
 
         for (map<string, int>::const_iterator v = vecinos.begin(); v != vecinos.end(); ++v) {
 
@@ -125,13 +124,12 @@ Camino Red::obtenerCamino(const string& origen, const string& destino){
             if (visitados[nombreVecino]) {
                 continue;
             }
-
             // Comprobar si la conexión conserva el costo mínimo
             if (dist[actual] <= numeric_limits<int>::max() - costoEnlace && dist[actual] + costoEnlace == distanciaVecino->second) {
 
                 visitados[nombreVecino] = true;
-                previo[nombreVecino] = actual;
-                cola.push(nombreVecino);
+                previo[nombreVecino] = actual; //guardar quien fue el anterior
+                cola.push(nombreVecino); //agregamos a cola para explorar sus vecinos
             }
         }
     }
@@ -142,9 +140,9 @@ Camino Red::obtenerCamino(const string& origen, const string& destino){
     }
 
     // Reconstruir la ruta desde el destino hasta el origen
-    vector<string> nodosInvertidos;
+    vector<string> nodosInvertidos; //almacena temporalmente los nodos desde el destino hasta el origen
 
-    string actual = destino;
+    string actual = destino; //enrutador con el que trabajamos
     nodosInvertidos.push_back(actual);
 
     while (actual != origen) {
