@@ -31,7 +31,7 @@ string leerTexto(const string& mensaje) {
 
 void mostrarMenu() {
     cout << endl;
-    cout << "CONEXIOM DE ENRUTADORES" << endl;
+    cout << "CONEXION DE ENRUTADORES" << endl;
     cout << "1. Agregar enrutador" << endl;
     cout << "2. Eliminar enrutador" << endl;
     cout << "3. Agregar enlace" << endl;

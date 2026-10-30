@@ -41,20 +41,15 @@ bool Enrutador::esVecino(const
     return vecinos.find(vecino) != vecinos.end();
 }
 
-int Enrutador::getCostoEnlace(const
-                              string& vecino) const {
-
-    map<
-        string, int>::const_iterator it = vecinos.find(vecino);
+int Enrutador::getCostoEnlace(const string& vecino) const {
+    map<string, int>::const_iterator it = vecinos.find(vecino);
     if (it == vecinos.end()) {
         return INFINITO;
     }
     return it->second;
 }
 
-const
-    map<
-    string, int>& Enrutador::getVecinos() const {
+const map<string, int>& Enrutador::getVecinos() const {
     return vecinos;
 }
 

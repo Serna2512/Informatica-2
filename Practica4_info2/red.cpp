@@ -4,6 +4,7 @@
 #include <queue>
 #include <vector>
 #include <functional>
+#include <limits>
 #include <utility>
 using namespace std;
 
@@ -51,6 +52,119 @@ void Red::dijkstra(const string& origen, map<string, int>& dist) const {
         }
     }
 }
+
+
+Camino Red::obtenerCamino(const string& origen, const string& destino){
+
+    Camino ruta;
+
+    //Verificar que existan ambos enrutadores
+    if (enrutadores.find(origen) == enrutadores.end() ||
+        enrutadores.find(destino) == enrutadores.end()) {
+        return ruta;
+    }
+
+    //Calcular las distancias mínimas desde el origen
+    map<string, int> dist;
+    dijkstra(origen, dist);
+
+    //Comprobar si el destino es alcanzable
+    map<string, int>::const_iterator d = dist.find(destino);
+
+    if (d == dist.end()) {
+        return ruta;
+    }
+
+    //Estructuras auxiliares para reconstruir la ruta
+    map<string, string> previo;
+    map<string, bool> visitados;
+    queue<string> cola;
+
+    cola.push(origen);
+    visitados[origen] = true;
+
+    //Recorrer únicamente conexiones que pertenecen
+    //a alguna ruta de costo mínimo
+    while (!cola.empty()) {
+
+        string actual = cola.front();
+        cola.pop(); //elimino el elemento que está al principio
+
+        if (actual == destino) {
+            break;
+        }
+
+        map<string, Enrutador>::const_iterator it = enrutadores.find(actual);
+
+        if (it == enrutadores.end()) {
+            continue;
+        }
+
+        const map<string, int>& vecinos = it->second.getVecinos();
+
+        for (map<string, int>::const_iterator v = vecinos.begin(); v != vecinos.end(); ++v) {
+
+            const string& nombreVecino = v->first;
+            int costoEnlace = v->second;
+
+            // Verificar que el vecino sea alcanzable
+            map<string, int>::const_iterator distanciaVecino = dist.find(nombreVecino);
+
+            if (distanciaVecino == dist.end()) { //si vecino no aparece en el mapa de distancias lo pasamos y se sigue examinando los demás
+                continue;
+            }
+
+            // Evitar visitar nuevamente un enrutador
+            if (visitados[nombreVecino]) {
+                continue;
+            }
+
+            // Comprobar si la conexión conserva el costo mínimo
+            if (dist[actual] <= numeric_limits<int>::max() - costoEnlace && dist[actual] + costoEnlace == distanciaVecino->second) {
+
+                visitados[nombreVecino] = true;
+                previo[nombreVecino] = actual;
+                cola.push(nombreVecino);
+            }
+        }
+    }
+
+    // Comprobar que se haya podido reconstruir la ruta
+    if (!visitados[destino]) {
+        return ruta;
+    }
+
+    // Reconstruir la ruta desde el destino hasta el origen
+    vector<string> nodosInvertidos;
+
+    string actual = destino;
+    nodosInvertidos.push_back(actual);
+
+    while (actual != origen) {
+
+        map<string, string>::const_iterator it = previo.find(actual);
+
+        if (it == previo.end()) {
+            return Camino();
+        }
+
+        actual = it->second;
+        nodosInvertidos.push_back(actual);
+    }
+
+    // Agregar los nodos en el orden correcto
+    for (vector<string>::reverse_iterator it = nodosInvertidos.rbegin(); //recorremos el vector del final al inicio
+         it != nodosInvertidos.rend(); ++it) {
+
+        ruta.agregarNodo(*it);
+    }
+
+    // Asignar el costo mínimo encontrado
+    ruta.establecerCosto(dist[destino]);
+
+    return ruta;
+}
+
 
 // ---------- Gestion de la topologia ----------
 
