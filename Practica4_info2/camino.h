@@ -8,7 +8,7 @@ using namespace std;
 class Camino{
 private:
     list<string> nodos;
-    int costo = 1; //representa que no hay una ruta aún
+    int costo = -1; //representa que no hay una ruta aún
 
 public:
 

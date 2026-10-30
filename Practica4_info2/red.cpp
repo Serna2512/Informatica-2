@@ -6,6 +6,8 @@
 #include <functional>
 #include <limits>
 #include <utility>
+#include <fstream>
+#include <sstream>
 using namespace std;
 
 Red::Red() {
@@ -43,6 +45,11 @@ void Red::dijkstra(const string& origen, map<string, int>& dist) const {
 
         const map<string, int>& vecinos = it->second.getVecinos();
         for (map<string, int>::const_iterator v = vecinos.begin(); v != vecinos.end(); ++v) {
+
+            if (costoActual > numeric_limits<int>::max() - v->second) { //proteccion contra desbordamiento de enteros
+                continue;
+            }
+
             int nuevoCosto = costoActual + v->second;   //si nuevo costo es menor que el guardado actualizamos dist
             map<string, int>::iterator d = dist.find(v->first);
             if (d == dist.end() || nuevoCosto < d->second) {
@@ -318,4 +325,121 @@ void Red::mostrarTablas() const {
         }
         cout << endl;
     }
+}
+
+bool Red::cargarDesdeArchivo(const string& nombreArchivo) {
+    ifstream archivo(nombreArchivo.c_str());
+
+    if (!archivo.is_open()) {
+        return false;
+    }
+
+    Red temporal;
+    string linea;
+    string seccion;
+
+    while (getline(archivo, linea)) {
+        istringstream entrada(linea);
+        string primero;
+
+        if (!(entrada >> primero) || primero[0] == '#') {
+            continue;
+        }
+
+        if (primero == "ENRUTADORES" || primero == "ENLACES") {
+            string extra;
+            if (entrada >> extra) {
+                return false;
+            }
+            seccion = primero;
+            continue;
+        }
+
+        if (seccion == "ENRUTADORES") {
+            string extra;
+
+            if (entrada >> extra || temporal.enrutadores.count(primero)) {
+                return false;
+            }
+
+            temporal.enrutadores.insert(
+                make_pair(primero, Enrutador(primero))
+                );
+        }
+        else if (seccion == "ENLACES") {
+            string b, extra;
+            int costo;
+
+            if (!(entrada >> b >> costo) || entrada >> extra) {
+                return false;
+            }
+
+            if (primero == b || costo <= 0 ||
+                !temporal.existeEnrutador(primero) ||
+                !temporal.existeEnrutador(b)) {
+                return false;
+            }
+
+            Enrutador& a = temporal.enrutadores[primero];
+            Enrutador& otro = temporal.enrutadores[b];
+
+            if (a.esVecino(b)) {
+                return false;
+            }
+
+            a.agregarVecino(b, costo);
+            otro.agregarVecino(primero, costo);
+        }
+        else {
+            return false;
+        }
+    }
+
+    if (!archivo.eof() || seccion != "ENLACES") {
+        return false;
+    }
+
+    temporal.recalcularTablas();
+
+    // Reemplazar la red actual solo si toda la lectura fue correcta.
+    enrutadores.swap(temporal.enrutadores);
+
+    return true;
+}
+
+
+bool Red::guardarEnArchivo(const string& nombreArchivo) const {
+    ofstream archivo(nombreArchivo.c_str());
+
+    if (!archivo.is_open()) {
+        return false;
+    }
+
+    archivo << "ENRUTADORES" << endl;
+
+    for (map<string, Enrutador>::const_iterator it = enrutadores.begin();
+         it != enrutadores.end(); ++it) {
+        archivo << it->first << endl;
+    }
+
+    archivo << endl << "ENLACES" << endl;
+
+    for (map<string, Enrutador>::const_iterator it = enrutadores.begin();
+         it != enrutadores.end(); ++it) {
+
+        const map<string, int>& vecinos = it->second.getVecinos();
+
+        for (map<string, int>::const_iterator v = vecinos.begin();
+             v != vecinos.end(); ++v) {
+
+            // Guardamos cada enlace bidireccional una sola vez.
+            if (it->first < v->first) {
+                archivo << it->first << " "
+                        << v->first << " "
+                        << v->second << endl;
+            }
+        }
+    }
+
+    return archivo.good();
 }

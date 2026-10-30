@@ -38,6 +38,9 @@ public:
     void mostrarRed() const;       // enrutadores y sus enlaces
     void mostrarTablas() const;    // tabla de costos conjunta de toda la red
 
+    bool cargarDesdeArchivo(const string& nombreArchivo);
+    bool guardarEnArchivo(const string& nombreArchivo) const;
+
     Camino obtenerCamino(const string& origen, const string& destino);
 };
 
