@@ -31,7 +31,7 @@ public:
     bool eliminarVecino(const string& vecino);
     bool esVecino(const string& vecino) const;
     int getCostoEnlace(const string& vecino) const;        // INFINITO si no es vecino
-    const map<string, int>& getVecinos() const;
+    const map<string, int>& getVecinos() const;     //get que devuelve referencia a los vecinos directos de un enrutador
 
     // Tabla de costos
     void reiniciarTabla();                                      // estado inicial: yo = 0 y mis vecinos directos

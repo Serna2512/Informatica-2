@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include "Enrutador.h"
+#include "camino.h"
 using namespace std;
 
 // La Red es la dueña de todos los enrutadores y la unica que conoce la
@@ -36,6 +37,11 @@ public:
     // Presentacion
     void mostrarRed() const;       // enrutadores y sus enlaces
     void mostrarTablas() const;    // tabla de costos conjunta de toda la red
+
+    bool cargarDesdeArchivo(const string& nombreArchivo);
+    bool guardarEnArchivo(const string& nombreArchivo) const;
+
+    Camino obtenerCamino(const string& origen, const string& destino);
 };
 
 #endif // RED_H

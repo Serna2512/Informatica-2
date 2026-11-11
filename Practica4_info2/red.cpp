@@ -4,7 +4,10 @@
 #include <queue>
 #include <vector>
 #include <functional>
+#include <limits>
 #include <utility>
+#include <fstream>
+#include <sstream>
 using namespace std;
 
 Red::Red() {
@@ -35,22 +38,138 @@ void Red::dijkstra(const string& origen, map<string, int>& dist) const {
             continue;
         }
 
-        map<string, Enrutador>::const_iterator it = enrutadores.find(nombreActual);
+        map<string, Enrutador>::const_iterator it = enrutadores.find(nombreActual); //iterador solo para lectura
         if (it == enrutadores.end()) {
             continue;
         }
 
         const map<string, int>& vecinos = it->second.getVecinos();
         for (map<string, int>::const_iterator v = vecinos.begin(); v != vecinos.end(); ++v) {
+
+            if (costoActual > numeric_limits<int>::max() - v->second) {
+                continue;
+            }
             int nuevoCosto = costoActual + v->second;   //si nuevo costo es menor que el guardado actualizamos dist
             map<string, int>::iterator d = dist.find(v->first);
             if (d == dist.end() || nuevoCosto < d->second) {
                 dist[v->first] = nuevoCosto;
-                cola.push(Par(nuevoCosto, v->first));
+                cola.push(Par(nuevoCosto, v->first)); //el push reorganiza automaticamente la cola para mantener el orden de prioridad
             }
         }
     }
 }
+
+
+Camino Red::obtenerCamino(const string& origen, const string& destino){
+
+    Camino ruta;
+
+    //Verificar que existan ambos enrutadores
+    if (enrutadores.find(origen) == enrutadores.end() ||
+        enrutadores.find(destino) == enrutadores.end()) {
+        return ruta;
+    }
+
+    //Calcular las distancias mínimas desde el origen
+    map<string, int> dist;
+    dijkstra(origen, dist);
+
+    //Comprobar si el destino es alcanzable
+    map<string, int>::const_iterator d = dist.find(destino);
+
+    if (d == dist.end()) {
+        return ruta;
+    }
+
+    //Estructuras auxiliares para reconstruir la ruta
+    map<string, string> previo; //guarda cual fue el enrutador anterior para reconstruir la ruta
+    map<string, bool> visitados; //evita recorrer varias veces el mismo enrutador
+    queue<string> cola; //almacena los enrutadores pendientes por explorar
+
+    cola.push(origen); //agregar al final el enrutador de origen
+    visitados[origen] = true; //ese enrutador ya lo visitamos
+
+    //Recorrer únicamente conexiones que pertenecen
+    //a alguna ruta de costo mínimo
+    while (!cola.empty()) {
+
+        string actual = cola.front(); //obtener el primero de la cola
+        cola.pop(); //elimino el elemento porque lo vamos a procesar
+
+        if (actual == destino) {
+            break;
+        }
+
+        map<string, Enrutador>::const_iterator it = enrutadores.find(actual);
+
+        if (it == enrutadores.end()) {
+            continue;
+        }
+
+        const map<string, int>& vecinos = it->second.getVecinos(); //obtener vecinos directos del enrutador actual para ver sus conexiones
+
+        for (map<string, int>::const_iterator v = vecinos.begin(); v != vecinos.end(); ++v) {
+
+            const string& nombreVecino = v->first;
+            int costoEnlace = v->second;
+
+            // Verificar que el vecino sea alcanzable
+            map<string, int>::const_iterator distanciaVecino = dist.find(nombreVecino);
+
+            if (distanciaVecino == dist.end()) { //si vecino no aparece en el mapa de distancias lo pasamos y se sigue examinando los demás
+                continue;
+            }
+
+            // Evitar visitar nuevamente un enrutador
+            if (visitados[nombreVecino]) {
+                continue;
+            }
+            // Comprobar si la conexión conserva el costo mínimo
+            if (dist[actual] <= numeric_limits<int>::max() - costoEnlace && dist[actual] + costoEnlace == distanciaVecino->second) {
+
+                visitados[nombreVecino] = true;
+                previo[nombreVecino] = actual; //guardar quien fue el anterior
+                cola.push(nombreVecino); //agregamos a cola para explorar sus vecinos
+            }
+        }
+    }
+
+    // Comprobar que se haya podido reconstruir la ruta
+    if (!visitados[destino]) {
+        return ruta;
+    }
+
+    // Reconstruir la ruta desde el destino hasta el origen
+    vector<string> nodosInvertidos; //almacena temporalmente los nodos desde el destino hasta el origen
+
+    string actual = destino; //enrutador con el que trabajamos
+    nodosInvertidos.push_back(actual);
+
+    while (actual != origen) {
+
+        map<string, string>::const_iterator it = previo.find(actual);
+
+        if (it == previo.end()) {
+            return Camino();
+        }
+
+        actual = it->second;
+        nodosInvertidos.push_back(actual);
+    }
+
+    // Agregar los nodos en el orden correcto
+    for (vector<string>::reverse_iterator it = nodosInvertidos.rbegin(); //recorremos el vector del final al inicio
+         it != nodosInvertidos.rend(); ++it) {
+
+        ruta.agregarNodo(*it);
+    }
+
+    // Asignar el costo mínimo encontrado
+    ruta.establecerCosto(dist[destino]);
+
+    return ruta;
+}
+
 
 // ---------- Gestion de la topologia ----------
 
@@ -71,8 +190,7 @@ bool Red::eliminarEnrutador(const string& nombre) {
 
     // Los vecinos dejan de tener enlace con el enrutador que se elimina
     const map<string, int>& vecinos = it->second.getVecinos();
-    for (map<string, int>::const_iterator v = vecinos.begin();
-         v != vecinos.end(); ++v) {
+    for (map<string, int>::const_iterator v = vecinos.begin(); v != vecinos.end(); ++v) {
         map<string, Enrutador>::iterator otro = enrutadores.find(v->first);
         if (otro != enrutadores.end()) {
             otro->second.eliminarVecino(nombre);
@@ -89,7 +207,7 @@ bool Red::agregarEnlace(const string& a, const string& b, int costo) {
     if (a == b || costo <= 0) {
         return false;
     }
-    map<string, Enrutador>::iterator ia = enrutadores.find(a);
+    map<string, Enrutador>::iterator ia = enrutadores.find(a); //.find() devuelve un iterador (D.M a ese valor)
     map<string, Enrutador>::iterator ib = enrutadores.find(b);
     if (ia == enrutadores.end() || ib == enrutadores.end()) {
         return false;
@@ -205,4 +323,121 @@ void Red::mostrarTablas() const {
         }
         cout << endl;
     }
+}
+
+bool Red::cargarDesdeArchivo(const string& nombreArchivo) {
+    ifstream archivo(nombreArchivo.c_str());
+
+    if (!archivo.is_open()) {
+        return false;
+    }
+
+    Red temporal;
+    string linea;
+    string seccion;
+
+    while (getline(archivo, linea)) {
+        istringstream entrada(linea);
+        string primero;
+
+        if (!(entrada >> primero) || primero[0] == '#') {
+            continue;
+        }
+
+        if (primero == "ENRUTADORES" || primero == "ENLACES") {
+            string extra;
+            if (entrada >> extra) {
+                return false;
+            }
+            seccion = primero;
+            continue;
+        }
+
+        if (seccion == "ENRUTADORES") {
+            string extra;
+
+            if (entrada >> extra || temporal.enrutadores.count(primero)) {
+                return false;
+            }
+
+            temporal.enrutadores.insert(
+                make_pair(primero, Enrutador(primero))
+                );
+        }
+        else if (seccion == "ENLACES") {
+            string b, extra;
+            int costo;
+
+            if (!(entrada >> b >> costo) || entrada >> extra) {
+                return false;
+            }
+
+            if (primero == b || costo <= 0 ||
+                !temporal.existeEnrutador(primero) ||
+                !temporal.existeEnrutador(b)) {
+                return false;
+            }
+
+            Enrutador& a = temporal.enrutadores[primero];
+            Enrutador& otro = temporal.enrutadores[b];
+
+            if (a.esVecino(b)) {
+                return false;
+            }
+
+            a.agregarVecino(b, costo);
+            otro.agregarVecino(primero, costo);
+        }
+        else {
+            return false;
+        }
+    }
+
+    if (!archivo.eof() || seccion != "ENLACES") {
+        return false;
+    }
+
+    temporal.recalcularTablas();
+
+    // Reemplazar la red actual solo si toda la lectura fue correcta.
+    enrutadores.swap(temporal.enrutadores);
+
+    return true;
+}
+
+
+bool Red::guardarEnArchivo(const string& nombreArchivo) const {
+    ofstream archivo(nombreArchivo.c_str());
+
+    if (!archivo.is_open()) {
+        return false;
+    }
+
+    archivo << "ENRUTADORES" << endl;
+
+    for (map<string, Enrutador>::const_iterator it = enrutadores.begin();
+         it != enrutadores.end(); ++it) {
+        archivo << it->first << endl;
+    }
+
+    archivo << endl << "ENLACES" << endl;
+
+    for (map<string, Enrutador>::const_iterator it = enrutadores.begin();
+         it != enrutadores.end(); ++it) {
+
+        const map<string, int>& vecinos = it->second.getVecinos();
+
+        for (map<string, int>::const_iterator v = vecinos.begin();
+             v != vecinos.end(); ++v) {
+
+            // Guardamos cada enlace bidireccional una sola vez.
+            if (it->first < v->first) {
+                archivo << it->first << " "
+                        << v->first << " "
+                        << v->second << endl;
+            }
+        }
+    }
+
+    return archivo.good();
 }
