@@ -25,6 +25,14 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         Nivel.h
         Nivel.cpp
+        NivelConduccion.h
+        NivelConduccion.cpp
+        Jugador.h
+        Jugador.cpp
+        Rigby.h
+        Rigby.cpp
+        Mordecai.h
+        Mordecai.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET Proyecto_Final_info2 APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

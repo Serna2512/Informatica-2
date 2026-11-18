@@ -12,7 +12,7 @@ public:
 
     virtual void iniciar();
     virtual void actualizar(float dt) = 0; //cada nivel implementa su propia actualizacion
-    virtual void finalizar() = 0; //cada nivel decide cómo terminar
+    virtual void finalizar();
 
     bool getActivo() const;
 };
