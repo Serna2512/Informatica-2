@@ -20,7 +20,7 @@ public:
     ~Mordecai() override;
 
     PrecisionTiro evaluarTiro(float posicionBarra);
-    void ejecutarTiro(float posicionBarra);
+    void ejecutarTiro(float posicionBarra); //no va a tirar la pelota, eso se lo dejamos al nivel pero sí nos dice que tan bueno es el tiro
 
     void actualizar(float dt) override;
 
