@@ -1,7 +1,7 @@
 #ifndef RIGBY_H
 #define RIGBY_H
 
-#include "jugador.h"
+#include "Jugador.h"
 
 enum class EstadoRigby
 {

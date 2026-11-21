@@ -1,7 +1,7 @@
 #ifndef NIVELCONDUCCION_H
 #define NIVELCONDUCCION_H
 
-#include "nivel.h"
+#include "Nivel.h"
 #include <vector>
 using namespace std;
 

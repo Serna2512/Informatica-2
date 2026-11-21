@@ -9,7 +9,7 @@ Rival::~Rival()
 {
 }
 
-// Getters
+//Getters
 
 float Rival::getX() const
 {
