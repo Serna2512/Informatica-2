@@ -28,7 +28,7 @@ public:
     //Comportamientos
     void perseguir(float dt, float distancia);
     void bloquearCamino(float dt, float distancia);
-    void atacar(Jugador* jugador) override;
+    unique_ptr<Proyectil> atacar(Jugador* jugador) override;
 
     void actualizar(float dt) override;
 

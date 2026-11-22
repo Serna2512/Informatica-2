@@ -1,0 +1,4 @@
+#ifndef RIVALLANZADOR_H
+#define RIVALLANZADOR_H
+
+#endif // RIVALLANZADOR_H

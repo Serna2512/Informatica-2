@@ -1,6 +1,7 @@
 #include "Rivalperseguidor.h"
 #include "Rigby.h"
 #include "Jugador.h"
+#include "Proyectil.h"
 #include <cmath>
 
 RivalPerseguidor::RivalPerseguidor(float x, float y, float velocidad, unsigned short int danio, Rigby* objetivo)
@@ -119,14 +120,15 @@ void RivalPerseguidor::bloquearCamino(float dt, float distancia)
     }
 }
 
-void RivalPerseguidor::atacar(Jugador* jugador)
+unique_ptr<Proyectil> RivalPerseguidor::atacar(Jugador* jugador)
 {
     if (jugador == nullptr){
-        return;}
+        return nullptr;}
 
     jugador->recibirDanio(getDanio());
 
     cantidadColisiones++;
+    return nullptr; //devolvemos nullptr ya que este rival no crea proyectiles, ataca por contacto
 }
 
 void RivalPerseguidor::actualizar(float dt)
