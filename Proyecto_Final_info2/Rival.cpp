@@ -45,7 +45,7 @@ void Rival::setY(float y)
 
 void Rival::setVelocidad(float velocidad)
 {
-    if (velocidad >= 0.0f)
+    if (velocidad >= 0.0)
         this->velocidad = velocidad;
 }
 
