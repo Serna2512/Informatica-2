@@ -4,6 +4,7 @@
 #include <QDebug>
 #include <cmath>
 #include <QTransform>
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -17,6 +18,7 @@ MainWindow::MainWindow(QWidget *parent)
     pelota->transportarPor(rigby.get()); //.get() obtiene el puntero actual a Rigby
 
     escena = new QGraphicsScene(this);//crear la escena
+
     ui->graphicsView->setScene(escena);
 
     //Cargar imagen de la cancha
@@ -28,6 +30,32 @@ MainWindow::MainWindow(QWidget *parent)
     //Ajustar la cancha al tamaño de la escena
     fondo->setPos(0, 0);
     fondo->setScale(1.0);
+
+    //Crear zona lodosa
+    zonaLodosa = unique_ptr<ZonaLodosa>(new ZonaLodosa(300.0, 250.0, 100.0, 70.0, 0.5));
+
+    //Representación gráfica de la zona
+    imagenZonaLodosa = escena->addRect(
+        zonaLodosa->getX(),
+        zonaLodosa->getY(),
+        zonaLodosa->getAncho(),
+        zonaLodosa->getAlto(),
+        QPen(Qt::NoPen),
+        QBrush(QColor(120, 75, 35, 190))
+        );
+
+    //Crear hueco
+    hueco = unique_ptr<Hueco>(new Hueco(450.0, 350.0, 65.0, 50.0, 15));
+
+    //Representación gráfica
+    imagenHueco = escena->addRect(
+        hueco->getX(),
+        hueco->getY(),
+        hueco->getAncho(),
+        hueco->getAlto(),
+        QPen(Qt::NoPen),
+        QBrush(QColor(35, 25, 20))
+        );
 
     imagenPelota = escena->addEllipse(
         0, 0, 16, 16,
@@ -109,6 +137,13 @@ void MainWindow::keyPressEvent(QKeyEvent *event) //como solo guardamos el estado
         derecha = true;
         break;
 
+    case Qt::Key_E:
+        pelota->desprender(-100.0 * ultimaDireccionX,
+                           -100.0 * ultimaDireccionY);
+
+        tiempoBloqueoRecuperacion = 0.5;
+        break;
+
     default:
         QMainWindow::keyPressEvent(event);
         break;
@@ -142,12 +177,48 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
 }
 
 
+void MainWindow::comprobarRecuperacionPelota(){
+
+
+    if (pelota->getEstado() == EstadoPelota::TRANSPORTADA)
+        return;
+
+    float centroRigbyX = rigby->getX() + 29.5; //centro del pixmap rigby en x
+    float centroRigbyY = rigby->getY() + 14.5;//centro del pixmap rigby en y
+
+    float centroPelotaX = pelota->getX() + 8.0; ;//centro del pixmap pelota en x
+    float centroPelotaY = pelota->getY() + 8.0;//centro del pixmap pelota en y
+
+    float dx = centroRigbyX - centroPelotaX;
+    float dy = centroRigbyY - centroPelotaY;
+
+    float distancia = sqrt(dx * dx + dy * dy); //obtener distancia de entre sus centros
+
+    if (distancia < 35.0  && tiempoBloqueoRecuperacion <= 0.0) {
+        pelota->transportarPor(rigby.get());
+    }
+}
+
+
+
 void MainWindow::actualizarJuego(float dt)
 {
+
+    if (nivelCompletado)
+        return;
+
+    rigby->actualizar(dt);
+
     //se calcula un vector con la direccion, ej: (0,1) sería hacía abajo por las coordenadas y, (0,-1) sería en -y, o sea, hacía arriba
 
     float dx = 0.0;
     float dy = 0.0;
+
+    tiempoBloqueoRecuperacion -= dt;
+
+    if (tiempoBloqueoRecuperacion < 0.0){
+        tiempoBloqueoRecuperacion = 0.0;
+    }
 
     if (arriba)
         dy -= 1.0;
@@ -252,24 +323,150 @@ void MainWindow::actualizarJuego(float dt)
 
     }
 
-    pelota->actualizarPosicionTransportada(
-        desplazamientoPelotaX,
-        desplazamientoPelotaY
-        );
-
-    imagenPelota->setPos(pelota->getX(), pelota->getY());
-
-    // Mostrar el sprite correspondiente
+    // Mostrar el sprite correspondiente a Rigby
     if (mirandoIzquierda)
         imagenRigby->setPixmap(spritesRigbyIzquierda[frameActual]);
     else
         imagenRigby->setPixmap(spritesRigby[frameActual]);
 
-    pelota->actualizar(dt);
+    comprobarColisionZonaLodosa();
+    comprobarColisionHueco();
 
-    imagenPelota->setPos(pelota->getX(),pelota->getY());//actualizar movimiento en la parte gráfica
+    if (!nivelCompletado && rigby->getX() >= 684.0) {
+        nivelCompletado = true;
 
-    imagenRigby->setPos(rigby->getX(), rigby->getY()); //actualizar movimiento en la parte gráfica
+        QMessageBox::information(
+            this,
+            "¡GOOOL!",
+            "¡Rigby ha conseguido llevar la pelota hasta el arco rival!"
+            );
 
-    // 5. Actualizar posición gráfica de Rigby.
+        return;
+    }
+
+
+    // Actualizar posición gráfica de Rigby
+    imagenRigby->setPos(rigby->getX(), rigby->getY());
+
+    // Actualizar pelota según su estado
+    if (pelota->getEstado() == EstadoPelota::TRANSPORTADA) {
+
+        // Calcular posición deseada de la pelota respecto a Rigby
+        float pelotaX = rigby->getX() + desplazamientoPelotaX;
+        float pelotaY = rigby->getY() + desplazamientoPelotaY;
+
+        // Limitar la pelota a los bordes de la cancha
+        if (pelotaX < 0.0)
+            pelotaX = 0.0;
+        else if (pelotaX > 784.0)
+            pelotaX = 784.0;
+
+        if (pelotaY < 0.0)
+            pelotaY = 0.0;
+        else if (pelotaY > 584.0)
+            pelotaY = 584.0;
+
+        // Convertir nuevamente a desplazamientos respecto a Rigby
+        desplazamientoPelotaX = pelotaX - rigby->getX();
+        desplazamientoPelotaY = pelotaY - rigby->getY();
+
+        pelota->actualizarPosicionTransportada(
+            desplazamientoPelotaX,
+            desplazamientoPelotaY
+            );
+
+    }
+    else {
+
+        // La pelota se mueve independientemente de Rigby
+        pelota->actualizar(dt);
+
+        // Comprobar si Rigby puede recuperarla
+        comprobarRecuperacionPelota();
+    }
+
+    // Actualizar representación gráfica de la pelota
+    imagenPelota->setPos(pelota->getX(), pelota->getY());
+}
+
+void MainWindow::comprobarColisionZonaLodosa()
+{
+    QRectF rectRigby(
+        rigby->getX(),
+        rigby->getY(),
+        59.0,
+        29.0
+        );
+
+    QRectF rectZona(
+        zonaLodosa->getX(),
+        zonaLodosa->getY(),
+        zonaLodosa->getAncho(),
+        zonaLodosa->getAlto()
+        );
+
+    bool colision = rectRigby.intersects(rectZona);
+
+    if (colision){
+        //Aplicar el efecto mientras Rigby esté dentro
+        zonaLodosa->afectar(rigby.get());
+
+        if (!dentroZonaLodosa) {
+            dentroZonaLodosa = true;
+            qDebug() << "Rigby entro en la zona lodosa";
+        }
+    }
+    else if (dentroZonaLodosa) {
+
+        dentroZonaLodosa = false;
+        qDebug() << "Rigby salio de la zona lodosa";
+    }
+}
+
+
+void MainWindow::comprobarColisionHueco()
+{
+    QRectF rectRigby(
+        rigby->getX(),
+        rigby->getY(),
+        59.0,
+        29.0
+        );
+
+    QRectF rectHueco(
+        hueco->getX(),
+        hueco->getY(),
+        hueco->getAncho(),
+        hueco->getAlto()
+        );
+
+    bool colision = rectRigby.intersects(rectHueco);
+
+    if (colision && !dentroHueco) {
+
+        dentroHueco = true;
+
+        // Aplicar daño
+        hueco->afectar(rigby.get());
+
+        // Expulsar la pelota si Rigby la estaba conduciendo
+        if (pelota->getEstado() == EstadoPelota::TRANSPORTADA) {
+
+            pelota->desprender(
+                -100.0 * ultimaDireccionX,
+                -100.0 * ultimaDireccionY
+                );
+
+            tiempoBloqueoRecuperacion = 0.5;
+        }
+
+        qDebug() << "Rigby cayo en un hueco";
+        qDebug() << "Vida actual:" << rigby->getVida();
+    }
+    else if (!colision && dentroHueco) {
+
+        dentroHueco = false;
+
+        qDebug() << "Rigby salio del hueco";
+    }
 }

@@ -39,16 +39,18 @@ void Rigby::activarPotenciador(float factor, float duracion)
 
 void Rigby::aplicarLentitud(float factor, float duracion)
 {
-    if (factor <= 0.0 || factor >= 1.0 || duracion <= 0)
+    if (factor <= 0.0 || factor >= 1.0 || duracion <= 0.0)
         return;
 
-    restaurarVelocidad();
+    // Reducir la velocidad solamente al comenzar el efecto
+    if (estado != EstadoRigby::RELENTIZADO) {
+        setVelocidad(getVelocidad() * factor);
+        factorVelocidadActual = factor;
+        estado = EstadoRigby::RELENTIZADO;
+    }
 
-    setVelocidad(getVelocidad() * factor);
-
-    factorVelocidadActual = factor; //factor que tiene actualmente la velocidad
+    // Renovar la duración mientras permanezca en el barro
     duracionEfecto = duracion;
-    estado = EstadoRigby::RELENTIZADO;
 }
 
 void Rigby::restaurarVelocidad()

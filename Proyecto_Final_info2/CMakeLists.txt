@@ -43,6 +43,12 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         Proyectil.cpp
         RivalLanzador.h
         RivalLanzador.cpp
+        Obstaculo.h
+        Obstaculo.cpp
+        Hueco.h
+        Hueco.cpp
+        ZonaLodosa.h
+        ZonaLodosa.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET Proyecto_Final_info2 APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

@@ -38,6 +38,8 @@ public:
     void actualizarPosicionTransportada(float desplazamientoX, float desplazamientoY); //actualiza la posicion lógica mientras está
     //siendo transportada
 
+    void desprender(float velocidadX, float velocidadY);
+
     //Getters
     float getX() const;
     float getY() const;

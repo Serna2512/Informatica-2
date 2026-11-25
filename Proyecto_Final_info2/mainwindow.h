@@ -15,6 +15,9 @@ using namespace std;
 #include <QTimer>
 #include <QElapsedTimer>
 #include <QGraphicsEllipseItem>
+#include "ZonaLodosa.h"
+#include <QGraphicsRectItem>
+#include "Hueco.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -44,6 +47,7 @@ private:
     unique_ptr<Pelota> pelota; //objeto pelota de clase pelota, unique porque esta clase administra temporalemente este objeto
     float ultimaDireccionX = 1.0; //ultimas dirreciones por si rigby se queda quieto hacer que la pelota esté correctamente ubicada
     float ultimaDireccionY = 0.0;
+    float tiempoBloqueoRecuperacion = 0.0;
 
 
     int frameActual = 0; //sprite que mostramos
@@ -64,6 +68,24 @@ private:
     bool derecha = false;
 
     void actualizarJuego(float dt); //actuliza la lógica del personaje y su representación gráfica
+
+    void comprobarRecuperacionPelota();
+
+    bool nivelCompletado = false;
+
+    unique_ptr<ZonaLodosa> zonaLodosa;
+    QGraphicsRectItem* imagenZonaLodosa;
+
+    bool dentroZonaLodosa = false;
+
+    void comprobarColisionZonaLodosa();
+
+    unique_ptr<Hueco> hueco;
+    QGraphicsRectItem* imagenHueco;
+
+    bool dentroHueco = false;
+    void comprobarColisionHueco();
+
 
 protected:
     void keyPressEvent(QKeyEvent *event) override; //override para sobreecribir este método heredado de QWidget
