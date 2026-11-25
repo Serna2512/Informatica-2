@@ -48,18 +48,10 @@ void Pelota::transportarPor(Jugador* jugador)
 
 void Pelota::actualizar(float dt)
 {
-    if (dt <= 0.0f)
+    if (dt <= 0.0)
         return;
 
-    if (estado == EstadoPelota::TRANSPORTADA)
-    {
-        if (portador != nullptr)
-        {
-            x = portador->getX();
-            y = portador->getY();
-        }
-    }
-    else if (estado == EstadoPelota::EN_MOVIMIENTO)
+    if (estado == EstadoPelota::EN_MOVIMIENTO)
     {
         x += velocidadX * dt; //usamos ecuaciones de movimiento x=x_0 +v_x*t
         y += velocidadY * dt; //usamos ecuaciones de movimiento verticalmente también
@@ -67,6 +59,16 @@ void Pelota::actualizar(float dt)
         //v_y la modificamos en el nivel 2 con la gravedad
     }
 }
+
+void Pelota::actualizarPosicionTransportada(float desplazamientoX, float desplazamientoY)
+{
+    if (estado != EstadoPelota::TRANSPORTADA || portador == nullptr)
+        return;
+
+    x = portador->getX() + desplazamientoX;
+    y = portador->getY() + desplazamientoY;
+}
+
 
 // Getters
 

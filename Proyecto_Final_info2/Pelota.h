@@ -35,6 +35,9 @@ public:
 
     void actualizar(float dt);
 
+    void actualizarPosicionTransportada(float desplazamientoX, float desplazamientoY); //actualiza la posicion lógica mientras está
+    //siendo transportada
+
     //Getters
     float getX() const;
     float getY() const;
