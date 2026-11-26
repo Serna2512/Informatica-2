@@ -5,6 +5,13 @@
 #include <cmath>
 #include <QTransform>
 #include <QMessageBox>
+#include <random>
+#include <QRectF>
+#include <QColor>
+#include <QBrush>
+#include <QPen>
+#include <memory>
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -12,10 +19,15 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    rigby = unique_ptr<Rigby> (new Rigby(300, 250, 100, 180)); //crear objeto de la clase Rigby
+    rigby = unique_ptr<Rigby> (new Rigby(100, 300, 100, 180)); //crear objeto de la clase Rigby
 
     pelota = unique_ptr<Pelota>(new Pelota(0, 0, 8));
     pelota->transportarPor(rigby.get()); //.get() obtiene el puntero actual a Rigby
+
+    //crear ptr unico a clase RivalPerseguidor
+    rivalPerseguidor = unique_ptr<RivalPerseguidor>(
+        new RivalPerseguidor(350, 200, 100, 10,rigby.get()));
+
 
     escena = new QGraphicsScene(this);//crear la escena
 
@@ -31,31 +43,15 @@ MainWindow::MainWindow(QWidget *parent)
     fondo->setPos(0, 0);
     fondo->setScale(1.0);
 
-    //Crear zona lodosa
-    zonaLodosa = unique_ptr<ZonaLodosa>(new ZonaLodosa(300.0, 250.0, 100.0, 70.0, 0.5));
+    //generar aleatoriamente los obstaculos
+    generarObstaculos();
 
-    //Representación gráfica de la zona
-    imagenZonaLodosa = escena->addRect(
-        zonaLodosa->getX(),
-        zonaLodosa->getY(),
-        zonaLodosa->getAncho(),
-        zonaLodosa->getAlto(),
-        QPen(Qt::NoPen),
-        QBrush(QColor(120, 75, 35, 190))
+    imagenRival = escena->addEllipse(
+        350, 200, 35, 35,
+        QPen(Qt::black),
+        QBrush(Qt::red)
         );
 
-    //Crear hueco
-    hueco = unique_ptr<Hueco>(new Hueco(450.0, 350.0, 65.0, 50.0, 15));
-
-    //Representación gráfica
-    imagenHueco = escena->addRect(
-        hueco->getX(),
-        hueco->getY(),
-        hueco->getAncho(),
-        hueco->getAlto(),
-        QPen(Qt::NoPen),
-        QBrush(QColor(35, 25, 20))
-        );
 
     imagenPelota = escena->addEllipse(
         0, 0, 16, 16,
@@ -204,10 +200,10 @@ void MainWindow::comprobarRecuperacionPelota(){
 void MainWindow::actualizarJuego(float dt)
 {
 
-    if (nivelCompletado)
-        return;
+    if (nivelCompletado){
+        return;}
 
-    rigby->actualizar(dt);
+        rigby->actualizar(dt);//verificar si rigby está siendo afectado por zona lodosa
 
     //se calcula un vector con la direccion, ej: (0,1) sería hacía abajo por las coordenadas y, (0,-1) sería en -y, o sea, hacía arriba
 
@@ -265,7 +261,7 @@ void MainWindow::actualizarJuego(float dt)
         rigby->setY(513.0);
 
     // Animar a Rigby cuando se desplaza horizontalmente
-    // Determinar hacia dónde está mirando Rigby
+    // Determinar hacia dónde está mirando Rigby así se quede quieto
 
     if (dx < 0.0)
         mirandoIzquierda = true;
@@ -289,6 +285,7 @@ void MainWindow::actualizarJuego(float dt)
         frameActual = 0;
         tiempoAnimacion = 0.0;
     }
+
 
     float desplazamientoPelotaX = 59.0;
     float desplazamientoPelotaY = 6.5;
@@ -323,16 +320,26 @@ void MainWindow::actualizarJuego(float dt)
 
     }
 
+
+    // Actualizar la lógica del rival
+    rivalPerseguidor->actualizar(dt);
+
+    // Actualizar su representación gráfica
+    imagenRival->setPos(
+        rivalPerseguidor->getX(),
+        rivalPerseguidor->getY()
+        );
+
     // Mostrar el sprite correspondiente a Rigby
     if (mirandoIzquierda)
         imagenRigby->setPixmap(spritesRigbyIzquierda[frameActual]);
     else
         imagenRigby->setPixmap(spritesRigby[frameActual]);
 
-    comprobarColisionZonaLodosa();
+    comprobarColisionZonaLodosa(); //los llamo después de mover a rigby para usar sus coordenadas actuales
     comprobarColisionHueco();
 
-    if (!nivelCompletado && rigby->getX() >= 684.0) {
+    if (!nivelCompletado && rigby->getX() >= 684.0 && rigby->getY() >= 206.6 && rigby->getY() <= 318.2 && pelota->getEstado() == EstadoPelota::TRANSPORTADA){
         nivelCompletado = true;
 
         QMessageBox::information(
@@ -389,39 +396,45 @@ void MainWindow::actualizarJuego(float dt)
     imagenPelota->setPos(pelota->getX(), pelota->getY());
 }
 
+
 void MainWindow::comprobarColisionZonaLodosa()
 {
     QRectF rectRigby(
         rigby->getX(),
         rigby->getY(),
-        59.0,
-        29.0
+        59,
+        29
+    );
+
+    for (size_t i = 0; i < zonasLodosas.size(); i++) {
+
+        QRectF rectZona(
+            zonasLodosas[i]->getX(),
+            zonasLodosas[i]->getY(),
+            zonasLodosas[i]->getAncho(),
+            zonasLodosas[i]->getAlto()
         );
 
-    QRectF rectZona(
-        zonaLodosa->getX(),
-        zonaLodosa->getY(),
-        zonaLodosa->getAncho(),
-        zonaLodosa->getAlto()
-        );
+        if (rectRigby.intersects(rectZona)) {
 
-    bool colision = rectRigby.intersects(rectZona);
+            // Aplicar lentitud mientras permanezca dentro
+            zonasLodosas[i]->afectar(rigby.get());
 
-    if (colision){
-        //Aplicar el efecto mientras Rigby esté dentro
-        zonaLodosa->afectar(rigby.get());
+            if (!dentroZonasLodosas[i]) {
+                dentroZonasLodosas[i] = true;
+                qDebug() << "Rigby entro en la zona lodosa" << i;
+            }
+        }
+        else {
 
-        if (!dentroZonaLodosa) {
-            dentroZonaLodosa = true;
-            qDebug() << "Rigby entro en la zona lodosa";
+            if (dentroZonasLodosas[i]) {
+                dentroZonasLodosas[i] = false;
+                qDebug() << "Rigby salio de la zona lodosa" << i;
+            }
         }
     }
-    else if (dentroZonaLodosa) {
-
-        dentroZonaLodosa = false;
-        qDebug() << "Rigby salio de la zona lodosa";
-    }
 }
+
 
 
 void MainWindow::comprobarColisionHueco()
@@ -429,44 +442,186 @@ void MainWindow::comprobarColisionHueco()
     QRectF rectRigby(
         rigby->getX(),
         rigby->getY(),
-        59.0,
-        29.0
+        59,
+        29
         );
 
-    QRectF rectHueco(
-        hueco->getX(),
-        hueco->getY(),
-        hueco->getAncho(),
-        hueco->getAlto()
+    for (size_t i = 0; i < huecos.size(); i++) {
+
+        QRectF rectHueco(
+            huecos[i]->getX(),
+            huecos[i]->getY(),
+            huecos[i]->getAncho(),
+            huecos[i]->getAlto()
+            );
+
+        if (rectRigby.intersects(rectHueco)) {
+
+            // Solo aplicar el efecto al entrar por primera vez
+            if (!dentroHuecos[i]) {
+
+                dentroHuecos[i] = true;
+
+                huecos[i]->afectar(rigby.get());
+
+                qDebug() << "Rigby cayo en el hueco" << i;
+
+                // Desprender la pelota si Rigby la transportaba
+                if (pelota->getEstado() == EstadoPelota::TRANSPORTADA) {
+
+                    pelota->desprender(
+                        -100.0f * ultimaDireccionX,
+                        -100.0f * ultimaDireccionY
+                        );
+
+                    tiempoBloqueoRecuperacion = 0.5f;
+                }
+            }
+        }
+        else {
+
+            // Detectar cuando Rigby sale del hueco
+            if (dentroHuecos[i]) {
+                dentroHuecos[i] = false;
+                qDebug() << "Rigby salio del hueco" << i;
+            }
+        }
+    }
+}
+
+
+
+void MainWindow::generarObstaculos()
+{
+    // Generador de números aleatorios
+    random_device rd;
+    mt19937 generador(rd());
+
+    // Lím)ites donde pueden aparecer los obstáculos
+    uniform_int_distribution<int> posicionX(200, 560);
+    uniform_int_distribution<int> posicionY(60, 440);
+
+    // Rectángulo de Rigby
+    QRectF rectRigby(
+        rigby->getX(),
+        rigby->getY(),
+        59,
+        29
         );
 
-    bool colision = rectRigby.intersects(rectHueco);
+    // Reservar un espacio alrededor de Rigby
+    rectRigby.adjust(-100, -100, 100, 100); // modifica los límites del rectángulo pero no modifica lo gráfico ni lo real
 
-    if (colision && !dentroHueco) {
 
-        dentroHueco = true;
+    // Guardar las posiciones ya ocupadas
+    vector<QRectF> posicionesOcupadas;
 
-        // Aplicar daño
-        hueco->afectar(rigby.get());
+    // Evitar que los obstáculos aparezcan cerca del arco
+    QRectF zonaArco(620, 0, 180, 600);
 
-        // Expulsar la pelota si Rigby la estaba conduciendo
-        if (pelota->getEstado() == EstadoPelota::TRANSPORTADA) {
+    // Función auxiliar para verificar si una posición es válida
+    auto posicionValida = [&](const QRectF& candidato)
+    {
+        if (candidato.intersects(rectRigby))
+            return false;
 
-            pelota->desprender(
-                -100.0 * ultimaDireccionX,
-                -100.0 * ultimaDireccionY
-                );
+        if (candidato.intersects(zonaArco))
+            return false;
 
-            tiempoBloqueoRecuperacion = 0.5;
+        for (const QRectF& ocupada : posicionesOcupadas) {
+            if (candidato.intersects(ocupada))
+                return false;
         }
 
-        qDebug() << "Rigby cayo en un hueco";
-        qDebug() << "Vida actual:" << rigby->getVida();
-    }
-    else if (!colision && dentroHueco) {
+        return true;
+    };
 
-        dentroHueco = false;
 
-        qDebug() << "Rigby salio del hueco";
+    // Generar 4 zonas lodosas
+    for (int i = 0; i < 4; i++) {
+
+        bool generado = false;
+
+        for (int intento = 0; intento < 500 && !generado; intento++) {
+
+            float x = posicionX(generador);
+            float y = posicionY(generador);
+
+            QRectF rectangulo(x, y, 100, 70);
+
+            // Margen para evitar que queden demasiado cerca
+            QRectF areaSeparacion = rectangulo.adjusted(-12, -12, 12, 12); //devuelve
+            //un rectangulo modificado pero no altera el original (solo para que haya margen y no estén muy juntos)
+
+            if (!posicionValida(areaSeparacion)){
+                continue;}
+
+            zonasLodosas.push_back(unique_ptr<ZonaLodosa>
+            (new ZonaLodosa(x, y, 100, 70, 0.5))); //como nuevaZona es objeto de ZonaLodosa con unique_ptr, este no permite copiarse
+            //por eso pasamos la propiedad así al contenedor
+
+            QGraphicsRectItem* imagen = escena->addRect(
+                x, y, 100, 70,
+                QPen(Qt::NoPen),
+                QBrush(QColor(120, 75, 35, 190))
+                );
+
+            imagenesZonasLodosas.push_back(imagen);
+
+            posicionesOcupadas.push_back(areaSeparacion);
+
+            generado = true;
+        }
+
+        if (!generado)
+            qWarning() << "No se pudo generar una zona lodosa.";
     }
+
+    // Generar 4 huecos
+    for (int i = 0; i < 4; i++) {
+
+        bool generado = false;
+
+        for (int intento = 0; intento < 500 && !generado; intento++) {
+
+            float x = posicionX(generador);
+            float y = posicionY(generador);
+
+            QRectF rectangulo(x, y, 65, 50);
+
+            QRectF areaSeparacion = rectangulo.adjusted(-12, -12, 12, 12); //devuelve
+                //un rectangulo modificado pero no altera el original (solo para que haya margen y no estén muy juntos)
+
+            if (!posicionValida(areaSeparacion))
+                continue;
+
+            huecos.push_back(unique_ptr<Hueco>(
+                    new Hueco(x, y, 65, 50, 15))
+                );
+
+            QGraphicsRectItem* imagen = escena->addRect(
+                x, y, 65, 50,
+                QPen(Qt::NoPen),
+                QBrush(QColor(35, 25, 20))
+                );
+
+            imagenesHuecos.push_back(imagen);
+
+            posicionesOcupadas.push_back(areaSeparacion);
+
+            generado = true;
+        }
+
+        if (!generado)
+            qWarning() << "No se pudo generar un hueco.";
+    }
+
+    // Inicializar los estados de colisión
+    dentroZonasLodosas.resize(zonasLodosas.size(), false); //cambia la cantidad de elementos, si aumenta se crean nuevos
+//si disminuye elmina los sobrantes
+
+    dentroHuecos.resize(huecos.size(), false);
+
+    qDebug() << "Zonas lodosas generadas:" << zonasLodosas.size();
+    qDebug() << "Huecos generados:" << huecos.size();
 }

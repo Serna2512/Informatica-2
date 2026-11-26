@@ -1,11 +1,12 @@
-#include "rigby.h"
+#include "Rigby.h"
+#include <QDebug>
 
 Rigby::Rigby(float x, float y, unsigned short int vidaMaxima, float velocidad)
     : Jugador(x, y, vidaMaxima, velocidad) //creamos objeto mediante constructor clase padre además de sus atributos propios
 {
     estado = EstadoRigby::NORMAL;
-    duracionEfecto = 0.0f;
-    factorVelocidadActual = 1.0f;
+    duracionEfecto = 0.0;
+    factorVelocidadActual = 1.0;
 }
 
 Rigby::~Rigby()

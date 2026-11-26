@@ -18,6 +18,8 @@ using namespace std;
 #include "ZonaLodosa.h"
 #include <QGraphicsRectItem>
 #include "Hueco.h"
+#include "RivalPerseguidor.h"
+#include <random>
 
 
 QT_BEGIN_NAMESPACE
@@ -54,6 +56,10 @@ private:
     float tiempoAnimacion = 0.0; //tiempo acumulado desde la última actualizacion de un srpite
     float intervaloAnimacion = 0.12; //tiempo arbitrario para cambiar el sprite
 
+    //Rival perseguidor
+    unique_ptr<RivalPerseguidor> rivalPerseguidor;
+    QGraphicsEllipseItem* imagenRival;
+
     QGraphicsPixmapItem* imagenRigby; //imagen que aparece en la pantalla
 
     Ui::MainWindow *ui;
@@ -73,19 +79,22 @@ private:
 
     bool nivelCompletado = false;
 
-    unique_ptr<ZonaLodosa> zonaLodosa;
-    QGraphicsRectItem* imagenZonaLodosa;
+    // Obstáculos lodosos
+    vector<unique_ptr<ZonaLodosa>> zonasLodosas; //coleccion de punteros a clase ZonaLodosa, cada elemento tendrá su propio objeto
+    vector<QGraphicsRectItem*> imagenesZonasLodosas; //coleccion de punteros GraphicsRectItem
 
-    bool dentroZonaLodosa = false;
+    // Huecos
+    vector<unique_ptr<Hueco>> huecos; //coleccion de punteros a clase Hueco, cada elemento tendrá su propio objeto
+    vector<QGraphicsRectItem*> imagenesHuecos;
+
+    void generarObstaculos();
+
+    vector<bool> dentroZonasLodosas;
+    vector<bool> dentroHuecos;
 
     void comprobarColisionZonaLodosa();
 
-    unique_ptr<Hueco> hueco;
-    QGraphicsRectItem* imagenHueco;
-
-    bool dentroHueco = false;
     void comprobarColisionHueco();
-
 
 protected:
     void keyPressEvent(QKeyEvent *event) override; //override para sobreecribir este método heredado de QWidget
