@@ -3,6 +3,8 @@
 #include "Jugador.h"
 #include "Proyectil.h"
 #include <cmath>
+#include <QRectF>
+#include <QDebug>
 
 RivalPerseguidor::RivalPerseguidor(float x, float y, float velocidad, unsigned short int danio, Rigby* objetivo)
     : Rival(x, y, velocidad, danio),
@@ -22,26 +24,26 @@ float RivalPerseguidor::percibir()
     if (objetivo == nullptr)
         return -1.0;
 
-    float dx = objetivo->getX() - getX(); //separación entre objetos pero desde coordenadas
-    float dy = objetivo->getY() - getY();
+    // Centro de Rigby (59 x 29)
+    float centroRigbyX = objetivo->getX() + 29.5;
+    float centroRigbyY = objetivo->getY() + 14.5;
 
-    float distancia = sqrt(dx * dx + dy * dy); //distancia real entre jugador y rivalP
+    // Centro del rival (35 x 35)
+    float centroRivalX = getX() + 17.5;
+    float centroRivalY = getY() + 17.5;
 
-    return distancia; //retornamos esa distancia real
+    float dx = centroRigbyX - centroRivalX;
+    float dy = centroRigbyY - centroRivalY;
+
+    return sqrt(dx * dx + dy * dy); //retorna distancia entre sus centros
 }
 
-bool RivalPerseguidor::razonar(float distanciaActual) //si el rival se está acercando a rigby que siga, pero si no, que bloquee el paso
+bool RivalPerseguidor::razonar(float distanciaActual)
 {
-    if (distanciaActual < 0.0){
-        return false;}
+    if (distanciaActual < 0.0)
+        return false;
 
-    if (distanciaAnterior <= 0.0){
-        return false;}
-
-    if (distanciaActual >= distanciaAnterior){ //bloaquear camino
-        return true;}
-
-    return false;
+    return false; // Por ahora, siempre perseguir
 }
 
 void RivalPerseguidor::aprender(float distanciaActual)
@@ -54,34 +56,53 @@ void RivalPerseguidor::aprender(float distanciaActual)
 
 void RivalPerseguidor::actuar(bool bloquear, float dt, float distancia)
 {
-    if (bloquear)
-        bloquearCamino(dt, distancia);
-    else
+    //if (bloquear)
+        //bloquearCamino(dt, distancia);
+    //else
         perseguir(dt, distancia);
 }
 
 void RivalPerseguidor::perseguir(float dt, float distancia)
 {
-    if (objetivo == nullptr || dt <= 0.0){
-        return;}
+    if (objetivo == nullptr || dt <= 0.0 || distancia <= 0.01)
+        return;
 
-    float dx = objetivo->getX() - getX();
-    float dy = objetivo->getY() - getY();
+    // Rectángulo de Rigby
+    QRectF rectRigby(
+        objetivo->getX(),
+        objetivo->getY(),
+        59,
+        29
+        );
+
+    // Rectángulo del rival
+    QRectF rectRival(
+        getX(),
+        getY(),
+        35,
+        35
+        );
+
+    // Si ya están tocándose, no avanzar más
+    if (rectRival.intersects(rectRigby))
+        return;
+
+    float centroRigbyX = objetivo->getX() + 29.5;
+    float centroRigbyY = objetivo->getY() + 14.5;
+
+    float centroRivalX = getX() + 17.5;
+    float centroRivalY = getY() + 17.5;
+
+    float dx = centroRigbyX - centroRivalX;
+    float dy = centroRigbyY - centroRivalY;
 
     float desplazamiento = getVelocidad() * dt;
 
-    if (desplazamiento >= distancia) //evitamos que el rival sobrepase la posicion de rigby, si están muy cerca seteamos por de rival
-                                    //a la de rigby
-    {
-        setX(objetivo->getX());
-        setY(objetivo->getY());
-    }
-    else
-    {
-        setX(getX() + (dx / distancia) * desplazamiento); //a la posicion actual del rival le sumamos el desplazamiento
-        setY(getY() + (dy / distancia) * desplazamiento);
-    }
+    // Mover hacia Rigby
+    setX(getX() + (dx / distancia) * desplazamiento);
+    setY(getY() + (dy / distancia) * desplazamiento);
 }
+
 
 void RivalPerseguidor::bloquearCamino(float dt, float distancia)
 {
@@ -89,7 +110,7 @@ void RivalPerseguidor::bloquearCamino(float dt, float distancia)
         return;}
 
     // Calculamos un punto lateral respecto a Rigby
-    const float distanciaLateral = 50.0;
+    const float distanciaLateral = 30.0;
 
     float dx = objetivo->getX() - getX();
     float dy = objetivo->getY() - getY();
@@ -120,6 +141,7 @@ void RivalPerseguidor::bloquearCamino(float dt, float distancia)
     }
 }
 
+
 unique_ptr<Proyectil> RivalPerseguidor::atacar(Jugador* jugador)
 {
     if (jugador == nullptr){
@@ -133,17 +155,64 @@ unique_ptr<Proyectil> RivalPerseguidor::atacar(Jugador* jugador)
 
 void RivalPerseguidor::actualizar(float dt)
 {
-    if (dt <= 0.0 || objetivo == nullptr){
-        return;}
+    if (dt <= 0.0 || objetivo == nullptr)
+        return;
 
-    float distanciaActual = percibir(); //obtenemos informacion de la distancia entre ribgy y rival
+    // Actualizar el tiempo entre ataques
+    tiempoUltimoAtaque += dt;
 
-    if (distanciaActual < 0.0){
-        return;}
+    float distanciaActual = percibir();
 
-    bool bloquear = razonar(distanciaActual); //vemos cual estrategia utilizar
+    if (distanciaActual < 0.0)
+        return;
 
-    actuar(bloquear, dt, distanciaActual); //actua según el razonamiento
+    // Perseguir a Rigby
+    perseguir(dt, distanciaActual);
 
-    aprender(distanciaActual); //actualiza la distancia
+    // 2. Evitar que el rival salga de la cancha
+    if (getX() < 0.0)
+        setX(0.0);
+
+    if (getX() > 750.0)
+        setX(750.0);
+
+    if (getY() < 29.0)
+        setY(29.0);
+
+    if (getY() > 507.0)
+        setY(507.0);
+
+    // Comprobar contacto
+    QRectF rectRigby(
+        objetivo->getX(),
+        objetivo->getY(),
+        59,
+        29
+        );
+
+    QRectF rectRival(
+        getX(),
+        getY(),
+        35,
+        35
+        );
+
+    //qDebug() << "Rectangulo Rigby:" << rectRigby;
+    //qDebug() << "Rectangulo Rival:" << rectRival;
+    //qDebug() << "¿Intersectan?:" << rectRival.intersects(rectRigby);
+
+    if (rectRival.intersects(rectRigby)) {
+
+        if (tiempoUltimoAtaque >= tiempoEntreAtaques) {
+
+            atacar(objetivo);
+
+            //qDebug() << "¡RIGBY RECIBIO DANIO!";
+            //qDebug() << "Vida restante:" << objetivo->getVida();
+
+            tiempoUltimoAtaque = 0.0;
+        }
+    }
+
+    aprender(percibir());
 }

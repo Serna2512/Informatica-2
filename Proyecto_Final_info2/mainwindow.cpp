@@ -3,6 +3,7 @@
 #include <QPixmap>
 #include <QDebug>
 #include <cmath>
+#include <algorithm>
 #include <QTransform>
 #include <QMessageBox>
 #include <random>
@@ -19,19 +20,64 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    rigby = unique_ptr<Rigby> (new Rigby(100, 300, 100, 180)); //crear objeto de la clase Rigby
+    // Crear a Rigby
+    rigby = unique_ptr<Rigby>(new Rigby(100, 300, 100, 180));
+
+    // Crear rival lógico
+    rivalPerseguidor = unique_ptr<RivalPerseguidor>(
+        new RivalPerseguidor(
+            rigby->getX() + 150,
+            rigby->getY(),
+            100,
+            10,
+            rigby.get()
+            )
+        );
+
+    // Crear rival lanzador superior
+    rivalesLanzadores.push_back(
+        unique_ptr<RivalLanzador>(
+            new RivalLanzador(350, 35, 0.0, 10, 2.0, 180.0)
+            )
+        );
+
+    // Crear rival lanzador inferior
+    rivalesLanzadores.push_back(
+        unique_ptr<RivalLanzador>(
+            new RivalLanzador(350, 530, 0.0, 10, 2.0, 180.0)
+            )
+        );
+
+    // Crear escena
+    escena = new QGraphicsScene(this);
+    ui->graphicsView->setScene(escena);
+
+    spritesRival[0] = QPixmap("imagenes_PF_info2/martillo1.png");
+    spritesRival[1] = QPixmap("imagenes_PF_info2/martillo2.png");
+
+    //qDebug() << "Sprite rival 1:" << spritesRival[0].size();
+    //qDebug() << "Sprite rival 2:" << spritesRival[1].size();
+
+    spriteBarro = QPixmap("imagenes_PF_info2/barro._sprite.png");
+    spriteHueco = QPixmap("imagenes_PF_info2/hueco_sprite.png");
+
+    //qDebug() << "Sprite barro:" << spriteBarro.size();
+    //qDebug() << "Sprite hueco:" << spriteHueco.size();
+
+
+    // Crear imagen del rival en el origen
+    imagenRival = escena->addPixmap(spritesRival[0]);
+
+    // Establecer su posición real en la escena
+    imagenRival->setPos(
+        rivalPerseguidor->getX(),
+        rivalPerseguidor->getY()
+        );
+
+    imagenRival->setZValue(2);
 
     pelota = unique_ptr<Pelota>(new Pelota(0, 0, 8));
     pelota->transportarPor(rigby.get()); //.get() obtiene el puntero actual a Rigby
-
-    //crear ptr unico a clase RivalPerseguidor
-    rivalPerseguidor = unique_ptr<RivalPerseguidor>(
-        new RivalPerseguidor(350, 200, 100, 10,rigby.get()));
-
-
-    escena = new QGraphicsScene(this);//crear la escena
-
-    ui->graphicsView->setScene(escena);
 
     //Cargar imagen de la cancha
     QPixmap imagenCancha("imagenes_PF_info2/cancha_futbol.png");
@@ -46,14 +92,7 @@ MainWindow::MainWindow(QWidget *parent)
     //generar aleatoriamente los obstaculos
     generarObstaculos();
 
-    imagenRival = escena->addEllipse(
-        350, 200, 35, 35,
-        QPen(Qt::black),
-        QBrush(Qt::red)
-        );
-
-
-    imagenPelota = escena->addEllipse(
+     imagenPelota = escena->addEllipse(
         0, 0, 16, 16,
         QPen(Qt::black),
         QBrush(Qt::white)
@@ -81,8 +120,19 @@ MainWindow::MainWindow(QWidget *parent)
 
     imagenRigby->setPos(rigby->getX(), rigby->getY());
 
-    qDebug() << "Ancho de Rigby:" << imagenRigby->boundingRect().width();
-    qDebug() << "Alto de Rigby:" << imagenRigby->boundingRect().height();
+    /*qDebug() << "RIGBY LOGICO:"
+             << rigby->getX() << rigby->getY();
+
+    //qDebug() << "RIGBY GRAFICO:"
+             << imagenRigby->pos();
+
+    //qDebug() << "RIVAL LOGICO:"
+             << rivalPerseguidor->getX()
+             << rivalPerseguidor->getY();
+
+    //qDebug() << "RIVAL GRAFICO:"
+             << imagenRival->pos();
+    */
 
     //Quitar barras laterales
     ui->graphicsView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -203,7 +253,7 @@ void MainWindow::actualizarJuego(float dt)
     if (nivelCompletado){
         return;}
 
-        rigby->actualizar(dt);//verificar si rigby está siendo afectado por zona lodosa
+        rigby->actualizar(dt);//verificar si rigby tiene efectos temporales
 
     //se calcula un vector con la direccion, ej: (0,1) sería hacía abajo por las coordenadas y, (0,-1) sería en -y, o sea, hacía arriba
 
@@ -330,6 +380,83 @@ void MainWindow::actualizarJuego(float dt)
         rivalPerseguidor->getY()
         );
 
+    //aquí actualizamos los lanzadores y generamos proyectiles
+
+    for (auto& rival : rivalesLanzadores){
+
+        rival->actualizar(dt);
+
+        if (rival->estaListoParaAtacar()){
+            qDebug() << "LANZADOR DISPARANDO";
+            proyectiles.push_back(rival->atacar(rigby.get()));
+        }
+    }
+
+    tiempoAnimacionRival += dt; // continuar con la animacion del rival
+
+    // Actualizar proyectiles y comprobar impactos
+    for (auto& proyectil : proyectiles) {
+
+        if (proyectil == nullptr || !proyectil->getActivo())
+            continue;
+
+        proyectil->actualizar(dt);
+
+        QRectF rectProyectil(
+            proyectil->getX(),
+            proyectil->getY(),
+            12,
+            12
+            );
+
+        QRectF rectRigby(
+            rigby->getX(),
+            rigby->getY(),
+            59,
+            29
+            );
+
+
+        if (rectProyectil.intersects(rectRigby)) {
+            proyectil->impactar(rigby.get());
+
+            qDebug() << "¡RIGBY RECIBIO UN PROYECTIL!";
+            qDebug() << "Vida restante:" << rigby->getVida();
+        }
+    }
+
+    // Eliminar proyectiles que ya impactaron o salieron de la cancha
+    proyectiles.erase(remove_if(
+            proyectiles.begin(),
+            proyectiles.end(),
+            [](const unique_ptr<Proyectil>& proyectil) {
+
+                if (proyectil == nullptr || !proyectil->getActivo())
+                    return true;
+
+                return proyectil->getX() < -20 ||
+                       proyectil->getX() > 760 ||
+                       proyectil->getY() < -20 ||
+                       proyectil->getY() > 620;
+            }
+            ),
+        proyectiles.end()
+        );
+
+    if (tiempoAnimacionRival >= 0.2) {
+        frameRival = (frameRival + 1) % 2;
+        tiempoAnimacionRival = 0.0;
+
+        imagenRival->setPixmap(spritesRival[frameRival]);
+    }
+
+    /*
+    qDebug() << "LOGICO:"
+             << rivalPerseguidor->getX()
+             << rivalPerseguidor->getY();
+    qDebug() << "GRAFICO:"
+             << imagenRival->pos();
+    */
     // Mostrar el sprite correspondiente a Rigby
     if (mirandoIzquierda)
         imagenRigby->setPixmap(spritesRigbyIzquierda[frameActual]);
@@ -422,14 +549,14 @@ void MainWindow::comprobarColisionZonaLodosa()
 
             if (!dentroZonasLodosas[i]) {
                 dentroZonasLodosas[i] = true;
-                qDebug() << "Rigby entro en la zona lodosa" << i;
+                //qDebug() << "Rigby entro en la zona lodosa" << i;
             }
         }
         else {
 
             if (dentroZonasLodosas[i]) {
                 dentroZonasLodosas[i] = false;
-                qDebug() << "Rigby salio de la zona lodosa" << i;
+//qDebug() << "Rigby salio de la zona lodosa" << i;
             }
         }
     }
@@ -464,7 +591,7 @@ void MainWindow::comprobarColisionHueco()
 
                 huecos[i]->afectar(rigby.get());
 
-                qDebug() << "Rigby cayo en el hueco" << i;
+                //qDebug() << "Rigby cayo en el hueco" << i;
 
                 // Desprender la pelota si Rigby la transportaba
                 if (pelota->getEstado() == EstadoPelota::TRANSPORTADA) {
@@ -483,7 +610,7 @@ void MainWindow::comprobarColisionHueco()
             // Detectar cuando Rigby sale del hueco
             if (dentroHuecos[i]) {
                 dentroHuecos[i] = false;
-                qDebug() << "Rigby salio del hueco" << i;
+                //qDebug() << "Rigby salio del hueco" << i;
             }
         }
     }
@@ -537,6 +664,12 @@ void MainWindow::generarObstaculos()
     };
 
 
+    QPixmap barroEscalado = spriteBarro.scaled(
+        100, 70,
+        Qt::IgnoreAspectRatio,
+        Qt::SmoothTransformation
+        );
+
     // Generar 4 zonas lodosas
     for (int i = 0; i < 4; i++) {
 
@@ -560,11 +693,9 @@ void MainWindow::generarObstaculos()
             (new ZonaLodosa(x, y, 100, 70, 0.5))); //como nuevaZona es objeto de ZonaLodosa con unique_ptr, este no permite copiarse
             //por eso pasamos la propiedad así al contenedor
 
-            QGraphicsRectItem* imagen = escena->addRect(
-                x, y, 100, 70,
-                QPen(Qt::NoPen),
-                QBrush(QColor(120, 75, 35, 190))
-                );
+            QGraphicsPixmapItem* imagen = escena->addPixmap(barroEscalado);
+
+            imagen->setPos(x, y);
 
             imagenesZonasLodosas.push_back(imagen);
 
@@ -576,6 +707,12 @@ void MainWindow::generarObstaculos()
         if (!generado)
             qWarning() << "No se pudo generar una zona lodosa.";
     }
+
+    QPixmap huecoEscalado = spriteHueco.scaled(
+        65, 50,
+        Qt::IgnoreAspectRatio,
+        Qt::SmoothTransformation
+        );
 
     // Generar 4 huecos
     for (int i = 0; i < 4; i++) {
@@ -599,11 +736,9 @@ void MainWindow::generarObstaculos()
                     new Hueco(x, y, 65, 50, 15))
                 );
 
-            QGraphicsRectItem* imagen = escena->addRect(
-                x, y, 65, 50,
-                QPen(Qt::NoPen),
-                QBrush(QColor(35, 25, 20))
-                );
+            QGraphicsPixmapItem* imagen = escena->addPixmap(huecoEscalado);
+
+            imagen->setPos(x, y);
 
             imagenesHuecos.push_back(imagen);
 
@@ -622,6 +757,6 @@ void MainWindow::generarObstaculos()
 
     dentroHuecos.resize(huecos.size(), false);
 
-    qDebug() << "Zonas lodosas generadas:" << zonasLodosas.size();
-    qDebug() << "Huecos generados:" << huecos.size();
+    //qDebug() << "Zonas lodosas generadas:" << zonasLodosas.size();
+    //qDebug() << "Huecos generados:" << huecos.size();
 }

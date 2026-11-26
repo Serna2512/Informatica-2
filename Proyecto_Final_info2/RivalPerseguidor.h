@@ -13,6 +13,8 @@ private:
     float distanciaAnterior;
     unsigned int cantidadColisiones;
     unsigned int intentosEsquivar;
+    float tiempoEntreAtaques;
+    float tiempoUltimoAtaque;
 
 public:
     RivalPerseguidor(float x, float y, float velocidad, unsigned short int danio, Rigby* objetivo);

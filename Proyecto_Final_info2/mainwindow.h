@@ -20,6 +20,8 @@ using namespace std;
 #include "Hueco.h"
 #include "RivalPerseguidor.h"
 #include <random>
+#include "RivalLanzador.h"
+#include "Proyectil.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -58,7 +60,16 @@ private:
 
     //Rival perseguidor
     unique_ptr<RivalPerseguidor> rivalPerseguidor;
-    QGraphicsEllipseItem* imagenRival;
+    QGraphicsPixmapItem* imagenRival;
+
+    QPixmap spritesRival[2];
+    int frameRival = 0;
+    float tiempoAnimacionRival = 0.0;
+
+    //Rival lanzador
+
+    vector<unique_ptr<RivalLanzador>> rivalesLanzadores;
+    vector<unique_ptr<Proyectil>> proyectiles;
 
     QGraphicsPixmapItem* imagenRigby; //imagen que aparece en la pantalla
 
@@ -81,11 +92,13 @@ private:
 
     // Obstáculos lodosos
     vector<unique_ptr<ZonaLodosa>> zonasLodosas; //coleccion de punteros a clase ZonaLodosa, cada elemento tendrá su propio objeto
-    vector<QGraphicsRectItem*> imagenesZonasLodosas; //coleccion de punteros GraphicsRectItem
+    vector<QGraphicsPixmapItem*> imagenesZonasLodosas; //coleccion de punteros GraphicsRectItem
+    QPixmap spriteBarro;
 
     // Huecos
     vector<unique_ptr<Hueco>> huecos; //coleccion de punteros a clase Hueco, cada elemento tendrá su propio objeto
-    vector<QGraphicsRectItem*> imagenesHuecos;
+    vector<QGraphicsPixmapItem*> imagenesHuecos;
+    QPixmap spriteHueco;
 
     void generarObstaculos();
 
