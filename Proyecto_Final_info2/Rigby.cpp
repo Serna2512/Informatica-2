@@ -20,8 +20,14 @@ void Rigby::actualizar(float dt)
 
     duracionEfecto -= dt;
 
+    qDebug() << "Tiempo restante del potenciador:" << duracionEfecto;
+
     if (duracionEfecto <= 0)
+    {
+        qDebug() << "RESTAURANDO VELOCIDAD";
         restaurarVelocidad();
+        qDebug() << "Velocidad restaurada:" << getVelocidad();
+    }
 }
 
 void Rigby::activarPotenciador(float factor, float duracion)

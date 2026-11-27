@@ -22,6 +22,7 @@ using namespace std;
 #include <random>
 #include "RivalLanzador.h"
 #include "Proyectil.h"
+#include "Potenciador.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -41,6 +42,7 @@ public:
 private:
     unique_ptr<Rigby> rigby; //objeto de la clase rigby (puntero unico a esta clase) //unique_ptr porque mainwindow es responsable de
     //administrar este objeto (de momento)
+    QGraphicsPixmapItem* imagenRigby; //imagen que aparece en la pantalla
 
     vector<QPixmap> spritesRigby; //vector que cotiene los sprites de Rigby
     vector<QPixmap> spritesRigbyIzquierda; //vector de sprites pero mirando hacia atras
@@ -54,7 +56,7 @@ private:
     float tiempoBloqueoRecuperacion = 0.0;
 
 
-    int frameActual = 0; //sprite que mostramos
+    unsigned short int frameActual = 0; //sprite que mostramos
     float tiempoAnimacion = 0.0; //tiempo acumulado desde la última actualizacion de un srpite
     float intervaloAnimacion = 0.12; //tiempo arbitrario para cambiar el sprite
 
@@ -63,7 +65,7 @@ private:
     QGraphicsPixmapItem* imagenRival;
 
     QPixmap spritesRival[2];
-    int frameRival = 0;
+    unsigned short int frameRival = 0;
     float tiempoAnimacionRival = 0.0;
 
     //Rival lanzador
@@ -71,7 +73,38 @@ private:
     vector<unique_ptr<RivalLanzador>> rivalesLanzadores;
     vector<unique_ptr<Proyectil>> proyectiles;
 
-    QGraphicsPixmapItem* imagenRigby; //imagen que aparece en la pantalla
+    // Sprites del rival lanzador
+    QPixmap spritesLanzador[4];
+
+    // Imágenes de los dos lanzadores
+    vector<QGraphicsPixmapItem*> imagenesLanzadores;
+    vector<float> tiemposContactoLanzadores;
+
+    // Tiempo de animación del disparo de cada lanzador
+    vector<float> tiemposAnimacionDisparo;
+
+    // Imágenes de los proyectiles
+    QPixmap spritesProyectil[2];
+    vector<QGraphicsPixmapItem*> imagenesProyectiles;
+
+    vector<int> framesProyectiles;
+    vector<float> tiemposAnimacionProyectiles;
+
+    // Potenciadores
+    vector<unique_ptr<Potenciador>> potenciadores;
+    vector<QGraphicsPixmapItem*> imagenesPotenciadores;
+
+    QPixmap spritesPotenciador[3];
+
+    int framePotenciador = 0;
+    float tiempoAnimacionPotenciador = 0.0;
+    float intervaloAnimacionPotenciador = 0.2;
+
+    void generarPotenciadores();
+    void comprobarColisionPotenciador();
+    float tiempoReaparicionPotenciador = 0.0;
+    float intervaloReaparicionPotenciador = 8.0;
+
 
     Ui::MainWindow *ui;
     QGraphicsScene *escena;

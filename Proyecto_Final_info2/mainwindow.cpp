@@ -3,7 +3,6 @@
 #include <QPixmap>
 #include <QDebug>
 #include <cmath>
-#include <algorithm>
 #include <QTransform>
 #include <QMessageBox>
 #include <random>
@@ -12,6 +11,8 @@
 #include <QBrush>
 #include <QPen>
 #include <memory>
+#include <QRandomGenerator>
+
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -26,10 +27,10 @@ MainWindow::MainWindow(QWidget *parent)
     // Crear rival lógico
     rivalPerseguidor = unique_ptr<RivalPerseguidor>(
         new RivalPerseguidor(
-            rigby->getX() + 150,
+            rigby->getX() + 250,
             rigby->getY(),
-            100,
-            10,
+            90,
+            5,
             rigby.get()
             )
         );
@@ -37,14 +38,14 @@ MainWindow::MainWindow(QWidget *parent)
     // Crear rival lanzador superior
     rivalesLanzadores.push_back(
         unique_ptr<RivalLanzador>(
-            new RivalLanzador(350, 35, 0.0, 10, 2.0, 180.0)
+            new RivalLanzador(342, 20, 0.0, 10, 2.0, 180.0)
             )
         );
 
     // Crear rival lanzador inferior
     rivalesLanzadores.push_back(
         unique_ptr<RivalLanzador>(
-            new RivalLanzador(350, 530, 0.0, 10, 2.0, 180.0)
+            new RivalLanzador(342, 480, 0.0, 10, 2.0, 180.0)
             )
         );
 
@@ -55,14 +56,33 @@ MainWindow::MainWindow(QWidget *parent)
     spritesRival[0] = QPixmap("imagenes_PF_info2/martillo1.png");
     spritesRival[1] = QPixmap("imagenes_PF_info2/martillo2.png");
 
+    // Cargar sprites del lanzador superior
+    spritesLanzador[0] = QPixmap("imagenes_PF_info2/sprite_lanzador1.png");
+    spritesLanzador[1] = QPixmap("imagenes_PF_info2/sprite_lanzador2.png");
+
+    // Cargar sprites del lanzador inferior
+    spritesLanzador[2] = QPixmap("imagenes_PF_info2/sprite_lanzador1_espalda.png");
+    spritesLanzador[3] = QPixmap("imagenes_PF_info2/sprite_lanzador2_espalda.png");
+
+    // Cargar sprites de los proyectiles
+    spritesProyectil[0] = QPixmap("imagenes_PF_info2/proyectil1.png");
+    spritesProyectil[1] = QPixmap("imagenes_PF_info2/proyectil2.png");
+
     //qDebug() << "Sprite rival 1:" << spritesRival[0].size();
     //qDebug() << "Sprite rival 2:" << spritesRival[1].size();
 
     spriteBarro = QPixmap("imagenes_PF_info2/barro._sprite.png");
     spriteHueco = QPixmap("imagenes_PF_info2/hueco_sprite.png");
 
-    //qDebug() << "Sprite barro:" << spriteBarro.size();
-    //qDebug() << "Sprite hueco:" << spriteHueco.size();
+    //imagenes de los potenciadores cargados y ya escalados
+    spritesPotenciador[0] = QPixmap("imagenes_PF_info2/potenciador1.png").scaled(
+        32, 32, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+    spritesPotenciador[1] = QPixmap("imagenes_PF_info2/potenciador2.png").scaled(
+        32, 32, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+    spritesPotenciador[2] = QPixmap("imagenes_PF_info2/potenciador3.png").scaled(
+        32, 32, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
 
     // Crear imagen del rival en el origen
@@ -91,6 +111,29 @@ MainWindow::MainWindow(QWidget *parent)
 
     //generar aleatoriamente los obstaculos
     generarObstaculos();
+
+    //generar aleatoriamente los potenciadores
+    generarPotenciadores();
+
+
+    // Crear imágenes de los dos lanzadores
+    for (unsigned int i = 0; i < rivalesLanzadores.size(); i++) {
+
+        int indiceSprite = (i == 0) ? 0 : 2;
+
+        QGraphicsPixmapItem* imagen =
+            escena->addPixmap(spritesLanzador[indiceSprite]);
+
+        imagen->setPos(
+            rivalesLanzadores[i]->getX(),
+            rivalesLanzadores[i]->getY()
+            );
+
+        imagenesLanzadores.push_back(imagen);
+
+        tiemposAnimacionDisparo.push_back(0.0);
+        tiemposContactoLanzadores.push_back(0.0);
+    }
 
      imagenPelota = escena->addEllipse(
         0, 0, 16, 16,
@@ -254,6 +297,7 @@ void MainWindow::actualizarJuego(float dt)
         return;}
 
         rigby->actualizar(dt);//verificar si rigby tiene efectos temporales
+        qDebug() << "Velocidad de Rigby:" << rigby->getVelocidad();
 
     //se calcula un vector con la direccion, ej: (0,1) sería hacía abajo por las coordenadas y, (0,-1) sería en -y, o sea, hacía arriba
 
@@ -293,6 +337,10 @@ void MainWindow::actualizarJuego(float dt)
 
     float desplazamientoX = dx * rigby->getVelocidad() * dt; //velocidad de Rigby
     float desplazamientoY = dy * rigby->getVelocidad() * dt;
+
+    // Guardar la posición anterior de Rigby para evitar superponerse al rival
+    float posicionAnteriorX = rigby->getX();
+    float posicionAnteriorY = rigby->getY();
 
     rigby->mover(desplazamientoX, desplazamientoY); //actualizar movimiento lógico
 
@@ -374,40 +422,111 @@ void MainWindow::actualizarJuego(float dt)
     // Actualizar la lógica del rival
     rivalPerseguidor->actualizar(dt);
 
+    // Comprobar colisión entre Rigby y el perseguidor
+    QRectF rectRigby(
+        rigby->getX(),
+        rigby->getY(),
+        59,
+        29
+        );
+
+    QRectF rectRival(
+        rivalPerseguidor->getX(),
+        rivalPerseguidor->getY(),
+        63,
+        66
+        );
+
+    if (rectRigby.intersects(rectRival)) {
+
+        // Devolver a Rigby a su última posición
+        rigby->setX(posicionAnteriorX);
+        rigby->setY(posicionAnteriorY);
+    }
+
     // Actualizar su representación gráfica
     imagenRival->setPos(
         rivalPerseguidor->getX(),
         rivalPerseguidor->getY()
         );
 
-    //aquí actualizamos los lanzadores y generamos proyectiles
+    //tiempoAnimacionRival += dt; // continuar con la animacion del rival
 
-    for (auto& rival : rivalesLanzadores){
+    // Actualizar proyectiles y comprobar impactos
+    // Actualizar proyectiles, animaciones y comprobar impactos
+    // Actualizar lanzadores y generar proyectiles
+    for (unsigned int i = 0; i < rivalesLanzadores.size(); i++) {
 
-        rival->actualizar(dt);
+        rivalesLanzadores[i]->actualizar(dt);
 
-        if (rival->estaListoParaAtacar()){
-            qDebug() << "LANZADOR DISPARANDO";
-            proyectiles.push_back(rival->atacar(rigby.get()));
+        // Actualizar duración de la animación de disparo
+        if (tiemposAnimacionDisparo[i] > 0.0) {
+
+            tiemposAnimacionDisparo[i] -= dt;
+
+            if (tiemposAnimacionDisparo[i] <= 0.0) {
+
+                tiemposAnimacionDisparo[i] = 0.0;
+
+                int spriteNormal = (i == 0) ? 0 : 2;
+
+                imagenesLanzadores[i]->setPixmap(
+                    spritesLanzador[spriteNormal]
+                    );
+            }
+        }
+
+        // Comprobar si puede disparar
+        if (rivalesLanzadores[i]->estaListoParaAtacar()) {
+
+            proyectiles.push_back(
+                rivalesLanzadores[i]->atacar(rigby.get())
+                );
+
+            if (proyectiles.back() != nullptr) {
+
+                // Cambiar sprite del lanzador
+                int spriteDisparo = (i == 0) ? 1 : 3;
+
+                imagenesLanzadores[i]->setPixmap(
+                    spritesLanzador[spriteDisparo]
+                    );
+
+                tiemposAnimacionDisparo[i] = 0.3;
+
+                // Crear imagen del proyectil
+                QGraphicsPixmapItem* imagen = escena->addPixmap(spritesProyectil[0]);
+                imagen->setScale(0.4);
+
+                imagen->setPos(
+                    proyectiles.back()->getX(),
+                    proyectiles.back()->getY()
+                    );
+
+                imagenesProyectiles.push_back(imagen);
+
+                // Inicializar datos de animación
+                framesProyectiles.push_back(0);
+                tiemposAnimacionProyectiles.push_back(0.0);
+            }
+            else {
+                proyectiles.pop_back();
+            }
         }
     }
 
-    tiempoAnimacionRival += dt; // continuar con la animacion del rival
 
-    // Actualizar proyectiles y comprobar impactos
-    for (auto& proyectil : proyectiles) {
+    // Comprobar colisiones de Rigby con los lanzadores
+    for (unsigned int i = 0; i < rivalesLanzadores.size(); i++) {
 
-        if (proyectil == nullptr || !proyectil->getActivo())
-            continue;
+        // Actualizar tiempo de espera entre daños
+        if (tiemposContactoLanzadores[i] > 0.0) {
 
-        proyectil->actualizar(dt);
+            tiemposContactoLanzadores[i] -= dt;
 
-        QRectF rectProyectil(
-            proyectil->getX(),
-            proyectil->getY(),
-            12,
-            12
-            );
+            if (tiemposContactoLanzadores[i] < 0.0)
+                tiemposContactoLanzadores[i] = 0.0;
+        }
 
         QRectF rectRigby(
             rigby->getX(),
@@ -416,32 +535,93 @@ void MainWindow::actualizarJuego(float dt)
             29
             );
 
+        QRectF rectLanzador(
+            rivalesLanzadores[i]->getX(),
+            rivalesLanzadores[i]->getY(),
+            imagenesLanzadores[i]->boundingRect().width(),
+            imagenesLanzadores[i]->boundingRect().height()
+            );
 
-        if (rectProyectil.intersects(rectRigby)) {
-            proyectil->impactar(rigby.get());
+        if (rectRigby.intersects(rectLanzador)) {
 
-            qDebug() << "¡RIGBY RECIBIO UN PROYECTIL!";
-            qDebug() << "Vida restante:" << rigby->getVida();
+            if (tiemposContactoLanzadores[i] <= 0.0) {
+
+                rigby->recibirDanio(2);
+
+                tiemposContactoLanzadores[i] = 1.0;
+
+                qDebug() << "¡RIGBY CHOCO CON UN LANZADOR!";
+                qDebug() << "Vida restante:" << rigby->getVida();
+            }
         }
     }
 
+    tiempoAnimacionRival += dt; // continuar con la animacion del rival
+
     // Eliminar proyectiles que ya impactaron o salieron de la cancha
-    proyectiles.erase(remove_if(
-            proyectiles.begin(),
-            proyectiles.end(),
-            [](const unique_ptr<Proyectil>& proyectil) {
+    for (int i = static_cast<int>(proyectiles.size()) - 1; i >= 0; i--) {
 
-                if (proyectil == nullptr || !proyectil->getActivo())
-                    return true;
+        proyectiles[i]->actualizar(dt);
 
-                return proyectil->getX() < -20 ||
-                       proyectil->getX() > 760 ||
-                       proyectil->getY() < -20 ||
-                       proyectil->getY() > 620;
+        QRectF rectProyectil(proyectiles[i]->getX(), proyectiles[i]->getY(), 16, 16);
+        QRectF rectRigby(rigby->getX(), rigby->getY(), 59, 29);
+
+        bool eliminar = false;
+
+        // Comprobar impacto contra Rigby
+        if (rectProyectil.intersects(rectRigby)) {
+
+            proyectiles[i]->impactar(rigby.get());
+
+            qDebug() << "¡RIGBY RECIBIO UN PROYECTIL!";
+            qDebug() << "Vida restante:" << rigby->getVida();
+
+            eliminar = true;
+        }
+
+        // Eliminar proyectiles que salen de la cancha
+        if (proyectiles[i]->getX() < -20 ||
+            proyectiles[i]->getX() > 780 ||
+            proyectiles[i]->getY() < -20 ||
+            proyectiles[i]->getY() > 590) {
+
+            eliminar = true;
+        }
+
+        if (!eliminar) {
+
+            // Actualizar animación del proyectil
+            tiemposAnimacionProyectiles[i] += dt;
+
+            if (tiemposAnimacionProyectiles[i] >= 0.12) {
+
+                framesProyectiles[i] = (framesProyectiles[i] + 1) % 2;
+
+                tiemposAnimacionProyectiles[i] = 0.0;
+
+                imagenesProyectiles[i]->setPixmap(spritesProyectil[framesProyectiles[i]]);
+                imagenesProyectiles[i]->setScale(0.4);
             }
-            ),
-        proyectiles.end()
-        );
+
+            // Actualizar posición de la imagen
+            imagenesProyectiles[i]->setPos(
+                proyectiles[i]->getX(),
+                proyectiles[i]->getY()
+                );
+        }
+
+        // Eliminar proyectil lógico y gráfico
+        if (eliminar) {
+
+            escena->removeItem(imagenesProyectiles[i]);
+            delete imagenesProyectiles[i];
+
+            proyectiles.erase(proyectiles.begin() + i);
+            imagenesProyectiles.erase(imagenesProyectiles.begin() + i);
+            framesProyectiles.erase(framesProyectiles.begin() + i);
+            tiemposAnimacionProyectiles.erase(tiemposAnimacionProyectiles.begin() + i);
+        }
+    }
 
     if (tiempoAnimacionRival >= 0.2) {
         frameRival = (frameRival + 1) % 2;
@@ -450,21 +630,49 @@ void MainWindow::actualizarJuego(float dt)
         imagenRival->setPixmap(spritesRival[frameRival]);
     }
 
-    /*
-    qDebug() << "LOGICO:"
-             << rivalPerseguidor->getX()
-             << rivalPerseguidor->getY();
-    qDebug() << "GRAFICO:"
-             << imagenRival->pos();
-    */
     // Mostrar el sprite correspondiente a Rigby
     if (mirandoIzquierda)
         imagenRigby->setPixmap(spritesRigbyIzquierda[frameActual]);
     else
         imagenRigby->setPixmap(spritesRigby[frameActual]);
 
+
     comprobarColisionZonaLodosa(); //los llamo después de mover a rigby para usar sus coordenadas actuales
     comprobarColisionHueco();
+
+    comprobarColisionPotenciador();
+
+    //Controlar la reaparición de potenciadores
+    if (potenciadores.empty()) {
+
+        if (tiempoReaparicionPotenciador > 0.0) {
+            tiempoReaparicionPotenciador -= dt;
+        }
+        else {
+            generarPotenciadores();
+        }
+    }
+
+    // Animar el potenciador mientras esté en la cancha (si no está activo
+    if (!potenciadores.empty()) {
+
+        tiempoAnimacionPotenciador += dt;
+
+        if (tiempoAnimacionPotenciador >= intervaloAnimacionPotenciador) {
+
+            framePotenciador = (framePotenciador + 1) % 3;
+
+            tiempoAnimacionPotenciador -= intervaloAnimacionPotenciador;
+
+            imagenesPotenciadores[0]->setPixmap(
+                spritesPotenciador[framePotenciador]
+                );
+        }
+    }
+    else {
+        framePotenciador = 0;
+        tiempoAnimacionPotenciador = 0.0;
+    }
 
     if (!nivelCompletado && rigby->getX() >= 684.0 && rigby->getY() >= 206.6 && rigby->getY() <= 318.2 && pelota->getEstado() == EstadoPelota::TRANSPORTADA){
         nivelCompletado = true;
@@ -759,4 +967,111 @@ void MainWindow::generarObstaculos()
 
     //qDebug() << "Zonas lodosas generadas:" << zonasLodosas.size();
     //qDebug() << "Huecos generados:" << huecos.size();
+}
+
+void MainWindow::generarPotenciadores()
+{
+    // Evitar generar otro si ya existe uno activo
+    if (!potenciadores.empty())
+        return;
+
+    float x;
+    float y;
+
+    bool posicionValida = false;
+    int intentos = 0;
+
+    while (!posicionValida && intentos < 500) {
+
+        int minimoX = 40;
+        int maximoX = 740;
+
+        int minimoY = 40;
+        int maximoY = 540;
+
+        x = QRandomGenerator::global()->bounded(minimoX, maximoX + 1);
+        y = QRandomGenerator::global()->bounded(minimoY, maximoY + 1);
+
+        QRectF rectPotenciador(x, y, 32, 32);
+
+        posicionValida = true;
+
+        // Evitar que aparezca encima de Rigby al comenzar
+        QRectF rectRigby(rigby->getX(), rigby->getY(), 59, 29);
+
+        if (rectPotenciador.intersects(rectRigby))
+            posicionValida = false;
+
+        // Evitar que aparezca encima de los huecos
+        for (unsigned int i = 0; i < huecos.size(); i++) {
+
+            QRectF rectHueco(
+                huecos[i]->getX(),
+                huecos[i]->getY(),
+                huecos[i]->getAncho(),
+                huecos[i]->getAlto()
+                );
+
+            if (rectPotenciador.intersects(rectHueco))
+                posicionValida = false;
+        }
+
+        intentos++;
+    }
+
+    if (!posicionValida)
+        return;
+
+    // Crear el objeto lógico y transferir su propiedad a MainWindow
+    potenciadores.push_back(
+        unique_ptr<Potenciador>(
+            new Potenciador(x, y, 32, 32, 1.5, 5.0)
+            )
+        );
+
+    // Crear su representación gráfica
+    QGraphicsPixmapItem* imagen = escena->addPixmap(spritesPotenciador[0]);
+
+    imagen->setPos(x, y);
+
+    imagenesPotenciadores.push_back(imagen);
+}
+
+void MainWindow::comprobarColisionPotenciador()
+{
+    if (potenciadores.empty())
+        return;
+
+    QRectF rectRigby(
+        rigby->getX(),
+        rigby->getY(),
+        59,
+        29
+        );
+
+    QRectF rectPotenciador(
+        potenciadores[0]->getX(),
+        potenciadores[0]->getY(),
+        potenciadores[0]->getAncho(),
+        potenciadores[0]->getAlto()
+        );
+
+    if (rectRigby.intersects(rectPotenciador)) {
+
+        if (potenciadores[0]->recoger(rigby.get())) {
+
+            // Retirar la imagen de la escena
+            escena->removeItem(imagenesPotenciadores[0]);
+            delete imagenesPotenciadores[0];
+
+            // Eliminar el objeto lógico y su imagen de los vectores
+            potenciadores.erase(potenciadores.begin());
+            imagenesPotenciadores.erase(imagenesPotenciadores.begin());
+
+            // Iniciar el tiempo de espera para generar otro
+            tiempoReaparicionPotenciador = intervaloReaparicionPotenciador;
+
+            qDebug() << "¡RIGBY RECOGIO UN POTENCIADOR!";
+        }
+    }
 }
