@@ -21,8 +21,14 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    // Crear a Rigby
-    rigby = unique_ptr<Rigby>(new Rigby(100, 300, 100, 120));
+    // Crear el nivel, que será propietario de los objetos lógicos, crear a rigby
+    nivelConduccion = unique_ptr<NivelConduccion>(new NivelConduccion());
+
+    // Obtener acceso a Rigby y a los obstáculos del nivel
+    rigby = nivelConduccion->getRigby();
+
+    zonasLodosas = &nivelConduccion->getZonasLodosas();
+    huecos = &nivelConduccion->getHuecos();
 
     // Crear rival lógico
     rivalPerseguidor = unique_ptr<RivalPerseguidor>(
@@ -31,7 +37,7 @@ MainWindow::MainWindow(QWidget *parent)
             rigby->getY(),
             65,
             5,
-            rigby.get()
+            rigby
             )
         );
 
@@ -94,7 +100,7 @@ MainWindow::MainWindow(QWidget *parent)
     imagenRival->setZValue(2);
 
     pelota = unique_ptr<Pelota>(new Pelota(0, 0, 8));
-    pelota->transportarPor(rigby.get()); //.get() obtiene el puntero actual a Rigby
+    pelota->transportarPor(rigby); //get() obtiene el puntero actual a Rigby
 
     //Cargar imagen de la cancha
     QPixmap imagenCancha("imagenes_PF_info2/cancha_futbol.png");
@@ -267,7 +273,7 @@ void MainWindow::comprobarRecuperacionPelota(){
     float distancia = sqrt(dx * dx + dy * dy); //obtener distancia de entre sus centros
 
     if (distancia < 35.0  && tiempoBloqueoRecuperacion <= 0.0) {
-        pelota->transportarPor(rigby.get());
+        pelota->transportarPor(rigby);
     }
 }
 
@@ -445,7 +451,7 @@ void MainWindow::actualizarJuego(float dt)
         if (rivalesLanzadores[i]->estaListoParaAtacar()) {
 
             proyectiles.push_back(
-                rivalesLanzadores[i]->atacar(rigby.get())
+                rivalesLanzadores[i]->atacar(rigby)
                 );
 
             if (proyectiles.back() != nullptr) {
@@ -535,7 +541,7 @@ void MainWindow::actualizarJuego(float dt)
         // Comprobar impacto contra Rigby
         if (imagenesProyectiles[i]->collidesWithItem(imagenRigby)){
 
-            proyectiles[i]->impactar(rigby.get());
+            proyectiles[i]->impactar(rigby);
 
             qDebug() << "¡RIGBY RECIBIO UN PROYECTIL!";
             qDebug() << "Vida restante:" << rigby->getVida();
@@ -696,7 +702,7 @@ void MainWindow::comprobarColisionZonaLodosa()
         if (imagenRigby->collidesWithItem(imagenesZonasLodosas[i])) {
 
             // Aplicar lentitud mientras permanezca dentro
-            zonasLodosas[i]->afectar(rigby.get());
+            (*zonasLodosas)[i]->afectar(rigby);
 
             if (!dentroZonasLodosas[i]) {
                 dentroZonasLodosas[i] = true;
@@ -724,7 +730,7 @@ void MainWindow::comprobarColisionHueco()
 
                 dentroHuecos[i] = true;
 
-                huecos[i]->afectar(rigby.get());
+                (*huecos)[i]->afectar(rigby);
 
                 // Desprender la pelota si Rigby la transportaba
                 if (pelota->getEstado() == EstadoPelota::TRANSPORTADA) {
@@ -750,13 +756,14 @@ void MainWindow::comprobarColisionHueco()
 
 
 
+
 void MainWindow::generarObstaculos()
 {
     // Generador de números aleatorios
     random_device rd;
     mt19937 generador(rd());
 
-    // Lím)ites donde pueden aparecer los obstáculos
+    // Límites donde pueden aparecer los obstáculos
     uniform_int_distribution<int> posicionX(200, 560);
     uniform_int_distribution<int> posicionY(60, 440);
 
@@ -769,8 +776,7 @@ void MainWindow::generarObstaculos()
         );
 
     // Reservar un espacio alrededor de Rigby
-    rectRigby.adjust(-100, -100, 100, 100); // modifica los límites del rectángulo pero no modifica lo gráfico ni lo real
-
+    rectRigby.adjust(-100, -100, 100, 100);
 
     // Guardar las posiciones ya ocupadas
     vector<QRectF> posicionesOcupadas;
@@ -779,10 +785,7 @@ void MainWindow::generarObstaculos()
     QRectF zonaArco(620, 0, 180, 600);
 
     // Función auxiliar para verificar si una posición es válida
-    auto posicionValida = [&](const QRectF& candidato) //funcion lamba que se define dentro de otra funcion
-    //como solo la necesito aqui no creo una funcion solo para esto
-    // corchetes indican la captura de variables externas, puede acceder a las variables de la funcion que contiene
-    //por referencia
+    auto posicionValida = [&](const QRectF& candidato)
     {
         if (candidato.intersects(rectRigby))
             return false;
@@ -797,7 +800,6 @@ void MainWindow::generarObstaculos()
 
         return true;
     };
-
 
     QPixmap barroEscalado = spriteBarro.scaled(
         100, 70,
@@ -818,22 +820,16 @@ void MainWindow::generarObstaculos()
             QRectF rectangulo(x, y, 100, 70);
 
             // Margen para evitar que queden demasiado cerca
-            QRectF areaSeparacion = rectangulo.adjusted(-12, -12, 12, 12); //devuelve
-            //un rectangulo modificado pero no altera el original (solo para que haya margen y no estén muy juntos)
+            QRectF areaSeparacion = rectangulo.adjusted(-12, -12, 12, 12);
 
-            if (!posicionValida(areaSeparacion)){
-                continue;}
-
-            zonasLodosas.push_back(unique_ptr<ZonaLodosa>
-            (new ZonaLodosa(x, y, 100, 70, 0.5))); //como nuevaZona es objeto de ZonaLodosa con unique_ptr, este no permite copiarse
-            //por eso pasamos la propiedad así al contenedor
+            if (!posicionValida(areaSeparacion))
+                continue;
 
             QGraphicsPixmapItem* imagen = escena->addPixmap(barroEscalado);
 
             imagen->setPos(x, y);
 
-            imagen->setShapeMode(QGraphicsPixmapItem::MaskShape); //maskshape tiene en cuenta los rectangulos opacos en lugar
-            // de usar siempre rectangulos completos
+            imagen->setShapeMode(QGraphicsPixmapItem::MaskShape);
 
             imagenesZonasLodosas.push_back(imagen);
 
@@ -864,21 +860,16 @@ void MainWindow::generarObstaculos()
 
             QRectF rectangulo(x, y, 65, 50);
 
-            QRectF areaSeparacion = rectangulo.adjusted(-12, -12, 12, 12); //devuelve
-                //un rectangulo modificado pero no altera el original (solo para que haya margen y no estén muy juntos)
+            QRectF areaSeparacion = rectangulo.adjusted(-12, -12, 12, 12);
 
             if (!posicionValida(areaSeparacion))
                 continue;
-
-            huecos.push_back(unique_ptr<Hueco>(
-                    new Hueco(x, y, 65, 50, 15))
-                );
 
             QGraphicsPixmapItem* imagen = escena->addPixmap(huecoEscalado);
 
             imagen->setPos(x, y);
 
-            imagen->setShapeMode(QGraphicsPixmapItem::MaskShape); //maskshape ya se para que se usa
+            imagen->setShapeMode(QGraphicsPixmapItem::MaskShape);
 
             imagenesHuecos.push_back(imagen);
 
@@ -890,16 +881,8 @@ void MainWindow::generarObstaculos()
         if (!generado)
             qWarning() << "No se pudo generar un hueco.";
     }
-
-    // Inicializar los estados de colisión
-    dentroZonasLodosas.resize(zonasLodosas.size(), false); //cambia la cantidad de elementos, si aumenta se crean nuevos
-//si disminuye elmina los sobrantes
-
-    dentroHuecos.resize(huecos.size(), false);
-
-    //qDebug() << "Zonas lodosas generadas:" << zonasLodosas.size();
-    //qDebug() << "Huecos generados:" << huecos.size();
 }
+
 
 void MainWindow::generarPotenciadores()
 {
@@ -935,13 +918,13 @@ void MainWindow::generarPotenciadores()
             posicionValida = false;
 
         // Evitar que aparezca encima de los huecos
-        for (unsigned int i = 0; i < huecos.size(); i++) {
+        for (unsigned int i = 0; i < huecos->size(); i++) {
 
             QRectF rectHueco(
-                huecos[i]->getX(),
-                huecos[i]->getY(),
-                huecos[i]->getAncho(),
-                huecos[i]->getAlto()
+                (*huecos)[i]->getX(),
+                (*huecos)[i]->getY(),
+                (*huecos)[i]->getAncho(),
+                (*huecos)[i]->getAlto()
                 );
 
             if (rectPotenciador.intersects(rectHueco))
@@ -990,7 +973,7 @@ void MainWindow::comprobarColisionPotenciador()
 
     if (rectRigby.intersects(rectPotenciador)) {
 
-        if (potenciadores[0]->recoger(rigby.get())) {
+        if (potenciadores[0]->recoger(rigby)) {
 
             // Retirar la imagen de la escena
             escena->removeItem(imagenesPotenciadores[0]);

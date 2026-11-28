@@ -1,4 +1,4 @@
-#include "nivel.h"
+#include "Nivel.h"
 
 Nivel::Nivel()
 {

@@ -23,6 +23,7 @@ using namespace std;
 #include "RivalLanzador.h"
 #include "Proyectil.h"
 #include "Potenciador.h"
+#include "NivelConduccion.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -40,7 +41,11 @@ public:
     ~MainWindow() override;
 
 private:
-    unique_ptr<Rigby> rigby; //objeto de la clase rigby (puntero unico a esta clase) //unique_ptr porque mainwindow es responsable de
+
+    //contendrá los objetos que deben ser propiedad de clase NivelConduccion
+    unique_ptr<NivelConduccion> nivelConduccion;
+
+    Rigby* rigby = nullptr; //objeto de la clase rigby (puntero unico a esta clase) //unique_ptr porque mainwindow es responsable de
     //administrar este objeto (de momento)
     QGraphicsPixmapItem* imagenRigby; //imagen que aparece en la pantalla
 
@@ -124,12 +129,12 @@ private:
     bool nivelCompletado = false;
 
     // Obstáculos lodosos
-    vector<unique_ptr<ZonaLodosa>> zonasLodosas; //coleccion de punteros a clase ZonaLodosa, cada elemento tendrá su propio objeto
-    vector<QGraphicsPixmapItem*> imagenesZonasLodosas; //coleccion de punteros GraphicsRectItem
+    const vector<unique_ptr<ZonaLodosa>>* zonasLodosas = nullptr; //guarda direcciones para poder consultar los vectores que pertenecen al nivel
+    vector<QGraphicsPixmapItem*> imagenesZonasLodosas;
     QPixmap spriteBarro;
 
     // Huecos
-    vector<unique_ptr<Hueco>> huecos; //coleccion de punteros a clase Hueco, cada elemento tendrá su propio objeto
+    const vector<unique_ptr<Hueco>>* huecos = nullptr;
     vector<QGraphicsPixmapItem*> imagenesHuecos;
     QPixmap spriteHueco;
 
