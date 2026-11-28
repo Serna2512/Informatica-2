@@ -83,9 +83,6 @@ void RivalPerseguidor::perseguir(float dt, float distancia)
         35
         );
 
-    // Si ya están tocándose, no avanzar más
-    if (rectRival.intersects(rectRigby))
-        return;
 
     float centroRigbyX = objetivo->getX() + 29.5;
     float centroRigbyY = objetivo->getY() + 14.5;
@@ -110,7 +107,7 @@ void RivalPerseguidor::bloquearCamino(float dt, float distancia)
         return;}
 
     // Calculamos un punto lateral respecto a Rigby
-    const float distanciaLateral = 30.0;
+    const float distanciaLateral = 50.0;
 
     float dx = objetivo->getX() - getX();
     float dy = objetivo->getY() - getY();
@@ -158,7 +155,6 @@ void RivalPerseguidor::actualizar(float dt)
     if (dt <= 0.0 || objetivo == nullptr)
         return;
 
-    // Actualizar el tiempo entre ataques
     tiempoUltimoAtaque += dt;
 
     float distanciaActual = percibir();
@@ -166,23 +162,7 @@ void RivalPerseguidor::actualizar(float dt)
     if (distanciaActual < 0.0)
         return;
 
-    // Perseguir a Rigby
-    perseguir(dt, distanciaActual);
-
-    // 2. Evitar que el rival salga de la cancha
-    if (getX() < 0.0)
-        setX(0.0);
-
-    if (getX() > 750.0)
-        setX(750.0);
-
-    if (getY() < 29.0)
-        setY(29.0);
-
-    if (getY() > 507.0)
-        setY(507.0);
-
-    // Comprobar contacto
+    // Comprobar si ya existe contacto con Rigby
     QRectF rectRigby(
         objetivo->getX(),
         objetivo->getY(),
@@ -197,19 +177,50 @@ void RivalPerseguidor::actualizar(float dt)
         35
         );
 
-    //qDebug() << "Rectangulo Rigby:" << rectRigby;
-    //qDebug() << "Rectangulo Rival:" << rectRival;
-    //qDebug() << "¿Intersectan?:" << rectRival.intersects(rectRigby);
+    if (rectRival.intersects(rectRigby))
+    {
+        // Si hay contacto, intentar rodear a Rigby
+        bloquearCamino(dt, distanciaActual);
+    }
+    else
+    {
+        // Si no hay contacto, perseguirlo normalmente
+        perseguir(dt, distanciaActual);
+    }
 
-    if (rectRival.intersects(rectRigby)) {
+    // Limitar movimiento a la cancha
+    if (getX() < 0.0)
+        setX(0.0);
 
-        if (tiempoUltimoAtaque >= tiempoEntreAtaques) {
+    if (getX() > 750.0)
+        setX(750.0);
 
+    if (getY() < 29.0)
+        setY(29.0);
+
+    if (getY() > 507.0)
+        setY(507.0);
+
+    // Volver a comprobar el contacto después del movimiento
+    rectRigby.setRect(
+        objetivo->getX(),
+        objetivo->getY(),
+        59,
+        29
+        );
+
+    rectRival.setRect(
+        getX(),
+        getY(),
+        35,
+        35
+        );
+
+    if (rectRival.intersects(rectRigby))
+    {
+        if (tiempoUltimoAtaque >= tiempoEntreAtaques)
+        {
             atacar(objetivo);
-
-            //qDebug() << "¡RIGBY RECIBIO DANIO!";
-            //qDebug() << "Vida restante:" << objetivo->getVida();
-
             tiempoUltimoAtaque = 0.0;
         }
     }

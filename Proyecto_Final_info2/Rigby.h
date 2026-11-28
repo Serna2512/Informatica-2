@@ -14,9 +14,16 @@ class Rigby : public Jugador
 {
 private:
     EstadoRigby estado;
-    float duracionEfecto;
-    float factorVelocidadActual;
 
+    float velocidadBase;
+
+    float factorPotenciador;
+    float factorLentitud;
+
+    float duracionPotenciador;
+    float duracionLentitud;
+
+    void actualizarVelocidad();
     void restaurarVelocidad();
 
 public:
@@ -31,8 +38,10 @@ public:
 
     // Getters
     EstadoRigby getEstado() const;
-    float getDuracionEfecto() const;
-    float getFactorVelocidadActual() const;
+    float getFactorPotenciador() const;
+    float getFactorLentitud() const;
+    float getDuracionPot() const;
+    float getDuracionLen() const;
 
     // Setter
     void setDuracionEfecto(float duracion);

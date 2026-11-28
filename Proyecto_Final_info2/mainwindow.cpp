@@ -22,14 +22,14 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     // Crear a Rigby
-    rigby = unique_ptr<Rigby>(new Rigby(100, 300, 100, 180));
+    rigby = unique_ptr<Rigby>(new Rigby(100, 300, 100, 120));
 
     // Crear rival lógico
     rivalPerseguidor = unique_ptr<RivalPerseguidor>(
         new RivalPerseguidor(
             rigby->getX() + 250,
             rigby->getY(),
-            90,
+            65,
             5,
             rigby.get()
             )
@@ -67,9 +67,6 @@ MainWindow::MainWindow(QWidget *parent)
     // Cargar sprites de los proyectiles
     spritesProyectil[0] = QPixmap("imagenes_PF_info2/proyectil1.png");
     spritesProyectil[1] = QPixmap("imagenes_PF_info2/proyectil2.png");
-
-    //qDebug() << "Sprite rival 1:" << spritesRival[0].size();
-    //qDebug() << "Sprite rival 2:" << spritesRival[1].size();
 
     spriteBarro = QPixmap("imagenes_PF_info2/barro._sprite.png");
     spriteHueco = QPixmap("imagenes_PF_info2/hueco_sprite.png");
@@ -162,20 +159,6 @@ MainWindow::MainWindow(QWidget *parent)
     //Posicionar a Rigby en la escena
 
     imagenRigby->setPos(rigby->getX(), rigby->getY());
-
-    /*qDebug() << "RIGBY LOGICO:"
-             << rigby->getX() << rigby->getY();
-
-    //qDebug() << "RIGBY GRAFICO:"
-             << imagenRigby->pos();
-
-    //qDebug() << "RIVAL LOGICO:"
-             << rivalPerseguidor->getX()
-             << rivalPerseguidor->getY();
-
-    //qDebug() << "RIVAL GRAFICO:"
-             << imagenRival->pos();
-    */
 
     //Quitar barras laterales
     ui->graphicsView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -297,7 +280,7 @@ void MainWindow::actualizarJuego(float dt)
         return;}
 
         rigby->actualizar(dt);//verificar si rigby tiene efectos temporales
-        qDebug() << "Velocidad de Rigby:" << rigby->getVelocidad();
+        //qDebug() << "Velocidad rigby: "<<rigby->getVelocidad();
 
     //se calcula un vector con la direccion, ej: (0,1) sería hacía abajo por las coordenadas y, (0,-1) sería en -y, o sea, hacía arriba
 
@@ -335,34 +318,37 @@ void MainWindow::actualizarJuego(float dt)
         ultimaDireccionY = dy;
     }
 
-    float desplazamientoX = dx * rigby->getVelocidad() * dt; //velocidad de Rigby
+    float desplazamientoX = dx * rigby->getVelocidad() * dt;
     float desplazamientoY = dy * rigby->getVelocidad() * dt;
 
-    // Guardar la posición anterior de Rigby para evitar superponerse al rival
     float posicionAnteriorX = rigby->getX();
     float posicionAnteriorY = rigby->getY();
 
-    rigby->mover(desplazamientoX, desplazamientoY); //actualizar movimiento lógico
+    rigby->mover(desplazamientoX, desplazamientoY);
 
-    //Limitar movimiento horizontal (800 - 59 - (parte blanca escena) = 684), para ajustar límites de la ventana y cancha
+    // Limitar movimiento horizontal
     if (rigby->getX() < 0.0)
         rigby->setX(0.0);
 
     if (rigby->getX() > 684.0)
         rigby->setX(684.0);
 
-    // Limitar movimiento vertical (600 - 29 - (parte en blanco de la escena) = 513)
+    // Limitar movimiento vertical
     if (rigby->getY() < 29.0)
         rigby->setY(29.0);
 
     if (rigby->getY() > 513.0)
         rigby->setY(513.0);
 
+    // Sincronizar posición gráfica de Rigby
+    imagenRigby->setPos(rigby->getX(), rigby->getY());
+
     // Animar a Rigby cuando se desplaza horizontalmente
     // Determinar hacia dónde está mirando Rigby así se quede quieto
 
     if (dx < 0.0)
         mirandoIzquierda = true;
+
     else if (dx > 0.0)
         mirandoIzquierda = false;
 
@@ -422,27 +408,6 @@ void MainWindow::actualizarJuego(float dt)
     // Actualizar la lógica del rival
     rivalPerseguidor->actualizar(dt);
 
-    // Comprobar colisión entre Rigby y el perseguidor
-    QRectF rectRigby(
-        rigby->getX(),
-        rigby->getY(),
-        59,
-        29
-        );
-
-    QRectF rectRival(
-        rivalPerseguidor->getX(),
-        rivalPerseguidor->getY(),
-        63,
-        66
-        );
-
-    if (rectRigby.intersects(rectRival)) {
-
-        // Devolver a Rigby a su última posición
-        rigby->setX(posicionAnteriorX);
-        rigby->setY(posicionAnteriorY);
-    }
 
     // Actualizar su representación gráfica
     imagenRival->setPos(
@@ -450,7 +415,7 @@ void MainWindow::actualizarJuego(float dt)
         rivalPerseguidor->getY()
         );
 
-    //tiempoAnimacionRival += dt; // continuar con la animacion del rival
+    tiempoAnimacionRival += dt; // continuar con la animacion del rival
 
     // Actualizar proyectiles y comprobar impactos
     // Actualizar proyectiles, animaciones y comprobar impactos
@@ -528,21 +493,16 @@ void MainWindow::actualizarJuego(float dt)
                 tiemposContactoLanzadores[i] = 0.0;
         }
 
-        QRectF rectRigby(
-            rigby->getX(),
-            rigby->getY(),
-            59,
-            29
-            );
+        if (imagenRigby->collidesWithItem(imagenesLanzadores[i])) {
 
-        QRectF rectLanzador(
-            rivalesLanzadores[i]->getX(),
-            rivalesLanzadores[i]->getY(),
-            imagenesLanzadores[i]->boundingRect().width(),
-            imagenesLanzadores[i]->boundingRect().height()
-            );
+            // Impedir que Rigby atraviese el lanzador
+            rigby->setX(posicionAnteriorX);
+            rigby->setY(posicionAnteriorY);
 
-        if (rectRigby.intersects(rectLanzador)) {
+            imagenRigby->setPos(
+                rigby->getX(),
+                rigby->getY()
+                );
 
             if (tiemposContactoLanzadores[i] <= 0.0) {
 
@@ -559,17 +519,21 @@ void MainWindow::actualizarJuego(float dt)
     tiempoAnimacionRival += dt; // continuar con la animacion del rival
 
     // Eliminar proyectiles que ya impactaron o salieron de la cancha
-    for (int i = static_cast<int>(proyectiles.size()) - 1; i >= 0; i--) {
+    for (int i = static_cast<int>(proyectiles.size()) - 1; i >= 0; i--){ //static_cast para hacer la converion de size_t
+        // que devuelve el vector a int para iterar
 
-        proyectiles[i]->actualizar(dt);
+        proyectiles[i]->actualizar(dt); //actualizar posicion lógica
 
-        QRectF rectProyectil(proyectiles[i]->getX(), proyectiles[i]->getY(), 16, 16);
-        QRectF rectRigby(rigby->getX(), rigby->getY(), 59, 29);
+        // Actualizar la posición gráfica antes de comprobar colisiones
+        imagenesProyectiles[i]->setPos(
+            proyectiles[i]->getX(),
+            proyectiles[i]->getY()
+            );
 
         bool eliminar = false;
 
         // Comprobar impacto contra Rigby
-        if (rectProyectil.intersects(rectRigby)) {
+        if (imagenesProyectiles[i]->collidesWithItem(imagenRigby)){
 
             proyectiles[i]->impactar(rigby.get());
 
@@ -602,12 +566,6 @@ void MainWindow::actualizarJuego(float dt)
                 imagenesProyectiles[i]->setPixmap(spritesProyectil[framesProyectiles[i]]);
                 imagenesProyectiles[i]->setScale(0.4);
             }
-
-            // Actualizar posición de la imagen
-            imagenesProyectiles[i]->setPos(
-                proyectiles[i]->getX(),
-                proyectiles[i]->getY()
-                );
         }
 
         // Eliminar proyectil lógico y gráfico
@@ -686,7 +644,6 @@ void MainWindow::actualizarJuego(float dt)
         return;
     }
 
-
     // Actualizar posición gráfica de Rigby
     imagenRigby->setPos(rigby->getX(), rigby->getY());
 
@@ -734,37 +691,21 @@ void MainWindow::actualizarJuego(float dt)
 
 void MainWindow::comprobarColisionZonaLodosa()
 {
-    QRectF rectRigby(
-        rigby->getX(),
-        rigby->getY(),
-        59,
-        29
-    );
+    for (size_t i = 0; i < imagenesZonasLodosas.size(); i++) {
 
-    for (size_t i = 0; i < zonasLodosas.size(); i++) {
-
-        QRectF rectZona(
-            zonasLodosas[i]->getX(),
-            zonasLodosas[i]->getY(),
-            zonasLodosas[i]->getAncho(),
-            zonasLodosas[i]->getAlto()
-        );
-
-        if (rectRigby.intersects(rectZona)) {
+        if (imagenRigby->collidesWithItem(imagenesZonasLodosas[i])) {
 
             // Aplicar lentitud mientras permanezca dentro
             zonasLodosas[i]->afectar(rigby.get());
 
             if (!dentroZonasLodosas[i]) {
                 dentroZonasLodosas[i] = true;
-                //qDebug() << "Rigby entro en la zona lodosa" << i;
             }
         }
         else {
 
             if (dentroZonasLodosas[i]) {
                 dentroZonasLodosas[i] = false;
-//qDebug() << "Rigby salio de la zona lodosa" << i;
             }
         }
     }
@@ -774,23 +715,9 @@ void MainWindow::comprobarColisionZonaLodosa()
 
 void MainWindow::comprobarColisionHueco()
 {
-    QRectF rectRigby(
-        rigby->getX(),
-        rigby->getY(),
-        59,
-        29
-        );
+    for (size_t i = 0; i < imagenesHuecos.size(); i++) {
 
-    for (size_t i = 0; i < huecos.size(); i++) {
-
-        QRectF rectHueco(
-            huecos[i]->getX(),
-            huecos[i]->getY(),
-            huecos[i]->getAncho(),
-            huecos[i]->getAlto()
-            );
-
-        if (rectRigby.intersects(rectHueco)) {
+        if (imagenRigby->collidesWithItem(imagenesHuecos[i])) {
 
             // Solo aplicar el efecto al entrar por primera vez
             if (!dentroHuecos[i]) {
@@ -799,17 +726,15 @@ void MainWindow::comprobarColisionHueco()
 
                 huecos[i]->afectar(rigby.get());
 
-                //qDebug() << "Rigby cayo en el hueco" << i;
-
                 // Desprender la pelota si Rigby la transportaba
                 if (pelota->getEstado() == EstadoPelota::TRANSPORTADA) {
 
                     pelota->desprender(
-                        -100.0f * ultimaDireccionX,
-                        -100.0f * ultimaDireccionY
+                        -100.0 * ultimaDireccionX,
+                        -100.0 * ultimaDireccionY
                         );
 
-                    tiempoBloqueoRecuperacion = 0.5f;
+                    tiempoBloqueoRecuperacion = 0.5;
                 }
             }
         }
@@ -818,7 +743,6 @@ void MainWindow::comprobarColisionHueco()
             // Detectar cuando Rigby sale del hueco
             if (dentroHuecos[i]) {
                 dentroHuecos[i] = false;
-                //qDebug() << "Rigby salio del hueco" << i;
             }
         }
     }
@@ -855,7 +779,10 @@ void MainWindow::generarObstaculos()
     QRectF zonaArco(620, 0, 180, 600);
 
     // Función auxiliar para verificar si una posición es válida
-    auto posicionValida = [&](const QRectF& candidato)
+    auto posicionValida = [&](const QRectF& candidato) //funcion lamba que se define dentro de otra funcion
+    //como solo la necesito aqui no creo una funcion solo para esto
+    // corchetes indican la captura de variables externas, puede acceder a las variables de la funcion que contiene
+    //por referencia
     {
         if (candidato.intersects(rectRigby))
             return false;
@@ -905,6 +832,9 @@ void MainWindow::generarObstaculos()
 
             imagen->setPos(x, y);
 
+            imagen->setShapeMode(QGraphicsPixmapItem::MaskShape); //maskshape tiene en cuenta los rectangulos opacos en lugar
+            // de usar siempre rectangulos completos
+
             imagenesZonasLodosas.push_back(imagen);
 
             posicionesOcupadas.push_back(areaSeparacion);
@@ -947,6 +877,8 @@ void MainWindow::generarObstaculos()
             QGraphicsPixmapItem* imagen = escena->addPixmap(huecoEscalado);
 
             imagen->setPos(x, y);
+
+            imagen->setShapeMode(QGraphicsPixmapItem::MaskShape); //maskshape ya se para que se usa
 
             imagenesHuecos.push_back(imagen);
 
